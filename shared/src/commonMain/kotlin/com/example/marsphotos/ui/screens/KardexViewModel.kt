@@ -1,18 +1,13 @@
 package com.example.marsphotos.ui.screens
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.*
 import com.example.marsphotos.data.SNRepository
 import com.example.marsphotos.model.Kardex
-
-import com.example.marsphotos.workers.AlmacenarKardexWorker
 import kotlinx.coroutines.launch
-import com.example.marsphotos.data.KardexWorker
 
 data class KardexUiState(
     val isLoading: Boolean = false,
@@ -20,15 +15,12 @@ data class KardexUiState(
     val error: String? = null
 )
 
-
 class KardexViewModel(
-    application: Application,
     private val repository: SNRepository
-) : AndroidViewModel(application) {
+) : ViewModel() {
+
     var uiState by mutableStateOf(KardexUiState())
         private set
-    private val workManager = WorkManager.getInstance(application)
-    val syncWorkInfo = workManager.getWorkInfosForUniqueWorkLiveData("sync_kardex")
 
     init {
         viewModelScope.launch {
@@ -38,20 +30,19 @@ class KardexViewModel(
         }
     }
 
-    fun cargarKardex(isOnline: Boolean) {
-        if (isOnline) {
-            sincronizarConWorkers()
+    fun cargarKardex() {
+        viewModelScope.launch {
+            uiState = uiState.copy(isLoading = true)
+            try {
+                val remotas = repository.fetchKardexRemote()
+                if (remotas.isNotEmpty()) {
+                    repository.insertarKardexLocal(remotas)
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(error = e.message)
+            } finally {
+                uiState = uiState.copy(isLoading = false)
+            }
         }
-    }
-
-    private fun sincronizarConWorkers() {
-        val fetchKardex = OneTimeWorkRequestBuilder<KardexWorker>().build()
-        val storeKardex = OneTimeWorkRequestBuilder<AlmacenarKardexWorker>().build()
-
-        workManager.beginUniqueWork(
-            "sync_kardex",
-            ExistingWorkPolicy.REPLACE,
-            fetchKardex
-        ).then(storeKardex).enqueue()
     }
 }

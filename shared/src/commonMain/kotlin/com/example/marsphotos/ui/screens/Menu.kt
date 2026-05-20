@@ -15,13 +15,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.marsphotos.model.MenuOption
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MenuScreen(navController: NavController) {
-
+fun MenuScreen(
+    onNavigate: (String) -> Unit // Sustituimos NavController por un callback multiplataforma
+) {
     val options = listOf(
         MenuOption("Carga\nAcadémica", "carga", Color(0xFF1976D2)),
         MenuOption("Kardex\nEscolar", "kardex", Color(0xFF388E3C)),
@@ -49,7 +49,7 @@ fun MenuScreen(navController: NavController) {
         ) {
             items(options) { option ->
                 MenuCard(option) {
-                    navController.navigate(option.route)
+                    onNavigate(option.route) // Disparamos la ruta elegida de forma limpia
                 }
             }
         }

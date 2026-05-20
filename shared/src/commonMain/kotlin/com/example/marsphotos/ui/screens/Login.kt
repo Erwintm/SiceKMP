@@ -15,18 +15,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.marsphotos.R
+import org.jetbrains.compose.resources.stringResource
+import sicekmp.shared.generated.resources.Res
+import sicekmp.shared.generated.resources.contrasena
+import sicekmp.shared.generated.resources.entrar
+import sicekmp.shared.generated.resources.login
+import sicekmp.shared.generated.resources.usuario
+
+// Nota: Aquí debes importar la clase Res que genera KMP automáticamente para tus strings compartidos.
+// Por lo general se genera bajo el paquete raíz de tu proyecto compartido:
+// import nota.shared.generated.resources.Res
+// import nota.shared.generated.resources.login
+// import nota.shared.generated.resources.usuario
+// import nota.shared.generated.resources.contrasena
+// import nota.shared.generated.resources.entrar
 
 @Composable
 fun LoginPantalla(
-
     onLoginSuccess: (String) -> Unit,
-
     viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)
 ) {
     Column(
@@ -34,14 +44,15 @@ fun LoginPantalla(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(stringResource(R.string.login), fontSize = 26.sp)
+        // En KMP se usa Res.string.nombre_recurso en vez de R.string.nombre_recurso
+        Text(stringResource(Res.string.login), fontSize = 26.sp)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
             value = viewModel.usuario,
             onValueChange = { viewModel.usuario = it },
-            label = { Text(stringResource(R.string.usuario)) },
+            label = { Text(stringResource(Res.string.usuario)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -51,7 +62,7 @@ fun LoginPantalla(
         TextField(
             value = viewModel.password,
             onValueChange = { viewModel.password = it },
-            label = { Text(stringResource(R.string.contrasena)) },
+            label = { Text(stringResource(Res.string.contrasena)) },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -59,10 +70,9 @@ fun LoginPantalla(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Button(
             onClick = {
-                viewModel. login(onLoginSuccess = { matricula ->
+                viewModel.login(onLoginSuccess = { matricula ->
                     onLoginSuccess(matricula)
                 })
             },
@@ -72,7 +82,7 @@ fun LoginPantalla(
             if (viewModel.isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.padding(4.dp))
             } else {
-                Text(stringResource(R.string.entrar))
+                Text(stringResource(Res.string.entrar))
             }
         }
 

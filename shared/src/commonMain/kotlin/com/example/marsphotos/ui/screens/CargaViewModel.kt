@@ -1,5 +1,7 @@
 package com.example.marsphotos.ui.screens
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.marsphotos.data.SNRepository
@@ -7,43 +9,37 @@ import com.example.marsphotos.model.CargaAcademica
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class CargaViewModel(
-    private val repository: SNRepository,
-    application: Application
+    private val repository: SNRepository
 ) : ViewModel() {
 
-    private val workManager = WorkManager.getInstance(application)
-
+    // Cambiamos a un estado simple para controlar la carga visual de sincronización
+    var estaSincronizando: Boolean by androidx.compose.runtime.mutableStateOf(false)
+        private set
 
     val materias: StateFlow<List<CargaAcademica>> = repository.obtenerCarga()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Companion.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 
-
-    val syncWorkInfo: LiveData<List<WorkInfo>> =
-        workManager.getWorkInfosForUniqueWorkLiveData("sync_carga_unica")
-
     fun sincronizarCarga() {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
-        val request = OneTimeWorkRequestBuilder<CargaAcademicaWorker>()
-            .setConstraints(constraints)
-            .build()
-
-        val storeRequest = OneTimeWorkRequestBuilder<AlmacenarCargaWorker>()
-            .build()
-
-
-        workManager.beginUniqueWork(
-            "sync_carga_unica",
-            ExistingWorkPolicy.REPLACE,
-            request
-        ).then(storeRequest).enqueue()
+        viewModelScope.launch {
+            estaSincronizando = true
+            try {
+                // Llama directo a la red a través del repositorio multiplataforma
+                val remotas = repository.traerCargaAcademica()
+                if (remotas.isNotEmpty()) {
+                    repository.insertLocalCarga(remotas)
+                }
+            } catch (e: Exception) {
+                // Manejo de errores silencioso o de red
+            } finally {
+                estaSincronizando = false
+            }
+        }
     }
 }

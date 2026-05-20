@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login">Iniciar Sesión</string>
+    <string name="usuario">Matrícula</string>
+    <string name="contrasena">NIP / Contraseña</string>
+    <string name="entrar">Entrar</string>
+</resources>

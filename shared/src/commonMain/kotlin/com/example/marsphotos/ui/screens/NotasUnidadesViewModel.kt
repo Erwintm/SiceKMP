@@ -1,16 +1,12 @@
 package com.example.marsphotos.ui.screens
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.*
 import com.example.marsphotos.data.SNRepository
 import com.example.marsphotos.model.MateriaUnidades
-import com.example.marsphotos.workers.NotasWorker
-import com.example.marsphotos.workers.AlmacenarNotasWorker
 import kotlinx.coroutines.launch
 
 data class NotasUiState(
@@ -20,16 +16,11 @@ data class NotasUiState(
 )
 
 class NotasUnidadesViewModel(
-    application: Application,
     private val repository: SNRepository
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     var uiState by mutableStateOf(NotasUiState())
         private set
-
-    private val workManager = WorkManager.getInstance(application)
-
-    val syncWorkInfo = workManager.getWorkInfosForUniqueWorkLiveData("sync_notas")
 
     init {
         viewModelScope.launch {
@@ -39,20 +30,19 @@ class NotasUnidadesViewModel(
         }
     }
 
-    fun cargarNotas(isOnline: Boolean) {
-        if (isOnline) {
-            sincronizarConWorkers()
+    fun cargarNotas() {
+        viewModelScope.launch {
+            uiState = uiState.copy(isLoading = true)
+            try {
+                val remotas = repository.fetchNotasUnidadesRemote()
+                if (remotas.isNotEmpty()) {
+                    repository.insertarNotasLocal(remotas)
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(error = e.message)
+            } finally {
+                uiState = uiState.copy(isLoading = false)
+            }
         }
-    }
-
-    private fun sincronizarConWorkers() {
-        val fetch = OneTimeWorkRequestBuilder<NotasWorker>().build()
-        val store = OneTimeWorkRequestBuilder<AlmacenarNotasWorker>().build()
-
-        workManager.beginUniqueWork(
-            "sync_notas",
-            ExistingWorkPolicy.REPLACE,
-            fetch
-        ).then(store).enqueue()
     }
 }

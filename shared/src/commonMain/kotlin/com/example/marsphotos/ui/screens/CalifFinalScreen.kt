@@ -1,45 +1,29 @@
 package com.example.marsphotos.ui.screens
 
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.work.WorkInfo
 import com.example.marsphotos.model.CalifFinal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalifFinalScreen(
-    navController: NavController,
-    viewModel: CalifFinalViewModel
+    viewModel: CalifFinalViewModel,
+    onBack: () -> Unit // Desacoplamos la navegación usando una lambda limpia
 ) {
-    val context = LocalContext.current
     val uiState = viewModel.uiState
-
-    // Monitoreo del Worker
-    val workInfos by viewModel.syncWorkInfo.observeAsState()
-    val isSyncing = workInfos?.any { it.state == WorkInfo.State.RUNNING } == true
+    val isSyncing = uiState.isLoading
 
     LaunchedEffect(Unit) {
-        val cm = context.getSystemService(ConnectivityManager::class.java)
-        val isOnline = cm.activeNetwork?.let { cm.getNetworkCapabilities(it) }
-            ?.let { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) } ?: false
-
-        viewModel.cargarFinales(isOnline)
+        viewModel.cargarFinales()
     }
 
     Scaffold(
@@ -47,8 +31,9 @@ fun CalifFinalScreen(
             TopAppBar(
                 title = { Text("Calificaciones Finales", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                    // Usamos un texto o un carácter simple temporal si el import de Icons da lata
+                    TextButton(onClick = onBack) {
+                        Text("< Volver", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             )
@@ -56,7 +41,6 @@ fun CalifFinalScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
 
-            // Etiqueta de sincronización
             uiState.listaFinal.firstOrNull()?.let {
                 Text(
                     text = "Actualizado: ${it.fechaSincronizacion}",
@@ -84,8 +68,6 @@ fun CalifFinalScreen(
         }
     }
 }
-// ... (Tu CalifFinalCard se queda exactamente igual)
-// ... (Todo el código que ya tienes de CalifFinalScreen)
 
 @Composable
 fun CalifFinalCard(final: CalifFinal) {
@@ -107,7 +89,7 @@ fun CalifFinalCard(final: CalifFinal) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Grupo: ${final.grupo} • ${final.acreditacion}",
+                    text = "Grupo: ${final.grupo} • ${final.accreditation}", // Corregido con la 'c'
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
