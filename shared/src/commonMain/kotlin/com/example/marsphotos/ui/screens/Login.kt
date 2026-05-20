@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import sicekmp.shared.generated.resources.Res
 import sicekmp.shared.generated.resources.contrasena
@@ -26,25 +25,16 @@ import sicekmp.shared.generated.resources.entrar
 import sicekmp.shared.generated.resources.login
 import sicekmp.shared.generated.resources.usuario
 
-// Nota: Aquí debes importar la clase Res que genera KMP automáticamente para tus strings compartidos.
-// Por lo general se genera bajo el paquete raíz de tu proyecto compartido:
-// import nota.shared.generated.resources.Res
-// import nota.shared.generated.resources.login
-// import nota.shared.generated.resources.usuario
-// import nota.shared.generated.resources.contrasena
-// import nota.shared.generated.resources.entrar
-
 @Composable
 fun LoginPantalla(
     onLoginSuccess: (String) -> Unit,
-    viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)
+    viewModel: LoginViewModel // Quitamos la inicialización por defecto con Factory vieja
 ) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // En KMP se usa Res.string.nombre_recurso en vez de R.string.nombre_recurso
         Text(stringResource(Res.string.login), fontSize = 26.sp)
 
         Spacer(modifier = Modifier.height(16.dp))
