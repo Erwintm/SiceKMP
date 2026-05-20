@@ -1,20 +1,21 @@
 package com.example.marsphotos.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-@Entity(tableName = "calif_finales")
+@Serializable
 data class CalifFinal(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val id: Int = 0,
     val materia: String = "",
     val grupo: String = "",
     val calificacion: Int = 0,
-    val acreditacion: String = "",
+    val accreditation: String = "",
     var fechaSincronizacion: String = ""
 )
 
-// Para el parseo
+@Serializable
 data class FinalResponse(val lstCalificacionFinal: List<FinalRaw>)
+
+@Serializable
 data class FinalRaw(
     val materia: String?,
     val grupo: String?,

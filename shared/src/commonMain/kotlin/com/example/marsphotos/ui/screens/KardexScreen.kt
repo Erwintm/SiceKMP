@@ -17,7 +17,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.WorkInfo
 import com.example.marsphotos.MarsPhotosApplication
 import com.example.marsphotos.model.Kardex
-import com.example.marsphotos.model.KardexViewModelFactory
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 

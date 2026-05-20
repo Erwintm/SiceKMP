@@ -1,14 +1,10 @@
 package com.example.marsphotos.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-@Entity(tableName = "carga_academica")
+@Serializable
 data class CargaAcademica(
-
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-
     val Semipresencial: String = "",
     val Observaciones: String = "",
     val Docente: String = "",
@@ -23,6 +19,5 @@ data class CargaAcademica(
     val CreditosMateria: Int = 0,
     val Materia: String = "",
     val Grupo: String = "",
-
     var fechaSincronizacion: String = ""
 )

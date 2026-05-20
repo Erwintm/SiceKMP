@@ -1,9 +1,13 @@
 package com.example.marsphotos.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class KardexResponse(
     val lstKardex: List<KardexRaw>
 )
 
+@Serializable
 data class KardexRaw(
     val ClvMat: String?,
     val Materia: String?,

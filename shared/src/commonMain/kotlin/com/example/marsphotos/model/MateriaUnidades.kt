@@ -1,18 +1,19 @@
 package com.example.marsphotos.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-@Entity(tableName = "notas_unidades")
+@Serializable
 data class MateriaUnidades(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val id: Int = 0,
     val materia: String = "",
     val unidades: String = "",
     var fechaSincronizacion: String = ""
 )
 
-
+@Serializable
 data class UnidadesResponse(val lstCalificacionUnidades: List<UnidadesRaw>)
+
+@Serializable
 data class UnidadesRaw(
     val Materia: String?,
     val C1: String?,

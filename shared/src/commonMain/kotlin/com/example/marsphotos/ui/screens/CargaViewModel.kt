@@ -1,18 +1,9 @@
-package com.example.marsphotos.model
+package com.example.marsphotos.ui.screens
 
-import android.app.Application
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.Constraints
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import com.example.marsphotos.data.SNRepository
-import com.example.marsphotos.workers.CargaAcademicaWorker
-import com.example.marsphotos.workers.AlmacenarCargaWorker
+import com.example.marsphotos.model.CargaAcademica
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,7 +19,7 @@ class CargaViewModel(
     val materias: StateFlow<List<CargaAcademica>> = repository.obtenerCarga()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Companion.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 

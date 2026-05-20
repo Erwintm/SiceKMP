@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.marsphotos.model.CargaAcademica
-import com.example.marsphotos.model.CargaViewModel
+import com.example.marsphotos.ui.screens.CargaViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.livedata.observeAsState

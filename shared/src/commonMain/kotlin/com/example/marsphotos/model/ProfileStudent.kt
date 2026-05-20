@@ -1,12 +1,10 @@
 package com.example.marsphotos.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-// Data class lista para recibir los datos del perfil
-@Entity(tableName = "perfil_estudiante")
+@Serializable
 data class ProfileStudent(
-    @PrimaryKey val matricula: String,
+    val matricula: String,
     val nombre: String,
     val carrera: String,
     val promedio: String,
