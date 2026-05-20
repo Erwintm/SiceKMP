@@ -1,14 +1,8 @@
-package com.example.marsphotos
+package com.example.marsphotos // Asegúrate de usar tu package real
 
 interface Platform {
     val name: String
 }
 
+// El contrato que cada plataforma debe cumplir obligatoriamente
 expect fun getPlatform(): Platform
-
-// ==================== NUEVO ====================
-expect class AppPreferences()
-
-expect fun getAppPreferences(): AppPreferences
-
-const val PREF_COOKIES = "PREF_COOKIES"

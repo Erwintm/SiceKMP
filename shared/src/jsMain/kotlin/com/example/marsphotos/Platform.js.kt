@@ -1,14 +1,7 @@
 package com.example.marsphotos
 
-import web.navigator.navigator
-
-class JsPlatform: Platform {
-    private val userAgent = navigator.userAgent
-    private val browserList = listOf("Chrome", "Firefox", "Safari", "Edge")
-
-    override val name: String = userAgent.findAnyOf(browserList, ignoreCase = true)
-            ?.let { (startIndex) -> userAgent.substring(startIndex).substringBefore(" ") }
-            ?: "Unknown"
+class WebPlatform : Platform {
+    override val name: String = "Web Browser"
 }
 
-actual fun getPlatform(): Platform = JsPlatform()
+actual fun getPlatform(): Platform = WebPlatform()
