@@ -1,31 +1,78 @@
 package com.example.marsphotos.network
 
-// Quitamos el import de Compose y dejamos puros de Ktor
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.http.* // De aquí sale el ContentType correcto
+import io.ktor.http.*
 
 class SICENETWService(private val client: HttpClient) {
 
-    private val baseUrl = "http://sicenet.itsur.edu.mx"
+    // URL base del servicio web del SICE
+    private val baseUrl = "http://sicenet.itsur.edu.mx/ws/wsalumnos.asmx"
 
-    suspend fun login(usuario: String, contrasenia: String): String {
-        val response: HttpResponse = client.post("$baseUrl/login") {
-            // Ahora sí usará el ContentType de Ktor sin marcar error
-            contentType(ContentType.Application.FormUrlEncoded)
-            setBody("txtUsuario=$usuario&txtContrasenia=$contrasenia")
+    /**
+     * Hace el login enviando el sobre XML correspondiente a la API SOAP.
+     */
+    suspend fun acceso(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/acceso")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
         }
-        return response.bodyAsText()
     }
 
-    suspend fun getPerfil(): String {
-        val response: HttpResponse = client.get("$baseUrl/perfil.aspx")
-        return response.bodyAsText()
+    /**
+     * Recupera los datos del perfil del alumno en formato XML.
+     */
+    suspend fun getPerfil(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/getAlumnoAcademicoWithLineamiento")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
+        }
     }
 
-    suspend fun getCargaAcademica(): String {
-        val response: HttpResponse = client.get("$baseUrl/carga_academica.aspx")
-        return response.bodyAsText()
+    /**
+     * Recupera la carga académica actual del alumno.
+     */
+    suspend fun getCarga(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/getCargaAcademicaByAlumno")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
+        }
+    }
+
+    /**
+     * Recupera el historial del Kardex del alumno.
+     */
+    suspend fun getKardex(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/getAllKardexConPromedioByAlumno")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
+        }
+    }
+
+    /**
+     * Recupera las calificaciones parciales por unidad.
+     */
+    suspend fun getNotesUnidades(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/getCalifUnidadesByAlumno")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
+        }
+    }
+
+    /**
+     * Recupera las calificaciones finales de las materias.
+     */
+    suspend fun getCalifFinales(requestBody: String): HttpResponse {
+        return client.post(baseUrl) {
+            header("SOAPAction", "http://tempuri.org/getAllCalifFinalByAlumnos")
+            contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
+            setBody(requestBody)
+        }
     }
 }

@@ -4,9 +4,7 @@ import com.example.marsphotos.model.*
 import com.example.marsphotos.network.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.http.*
 
 interface SNRepository {
     // Auth & Perfil
@@ -38,21 +36,24 @@ class NetworkSNRepository(
     private val snApiService: SICENETWService
 ) : SNRepository {
 
-    // AUTENTICACIÓN
+    // 🔐 AUTENTICACIÓN
     override suspend fun acceso(m: String, p: String): String {
         return try {
-            // Mandamos los parámetros de autenticación directamente usando el servicio Ktor
-            val responseString = snApiService.login(m, p)
+            val xmlEnvelope = getLoginXml(m, p)
+            val response = snApiService.acceso(xmlEnvelope)
+            val responseString = response.bodyAsText() // Usamos Ktor bodyAsText()
             if (responseString.contains("\"acceso\":true", ignoreCase = true)) "success" else "invalid"
         } catch (e: Exception) {
             "error"
         }
     }
 
-    // PERFIL
+    // 👤 PERFIL
     override suspend fun profile(m: String): ProfileStudent {
         return try {
-            val xml = snApiService.getPerfil()
+            val xmlEnvelope = getPerfilXml(m)
+            val response = snApiService.getPerfil(xmlEnvelope)
+            val xml = response.bodyAsText()
             val jsonContent = Regex("""<getAlumnoAcademicoWithLineamientoResult>([^<]+)""").find(xml)?.groupValues?.get(1)
 
             if (jsonContent != null) {
@@ -73,25 +74,28 @@ class NetworkSNRepository(
         }
     }
 
-    // Carga académica
+    // 📅 CARGA ACADÉMICA
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
         return try {
-            val response = snApiService.getCargaAcademica()
-            // TODO: Ajustar el parseo cuando definamos si usas kotlinx.serialization para los objetos
+            val xmlEnvelope = getCargaXml()
+            val response = snApiService.getCarga(xmlEnvelope)
+            val xmlCompleto = response.bodyAsText()
+            // Aquí procesarás el JSON con tus Regex más adelante
             emptyList()
         } catch (e: Exception) {
             emptyList()
         }
     }
 
-    // Mantenemos los flujos locales vacíos de momento para no romper las firmas de la interfaz
     override fun obtenerCarga(): Flow<List<CargaAcademica>> = flowOf(emptyList())
     override suspend fun insertLocalCarga(materias: List<CargaAcademica>) {}
 
-    // KARDEX
+    // 📜 KARDEX
     override suspend fun fetchKardexRemote(): List<Kardex> {
         return try {
-            val xmlCompleto = snApiService.getCargaAcademica() // O tu llamada correspondiente a Kardex si la mapeas en el servicio
+            val xmlEnvelope = getKardexXml()
+            val response = snApiService.getKardex(xmlEnvelope)
+            val xmlCompleto = response.bodyAsText()
             val regex = Regex("""<getAllKardexConPromedioByAlumnoResult>([\s\S]*?)</getAllKardexConPromedioByAlumnoResult>""", RegexOption.IGNORE_CASE)
             val contenidoJson = regex.find(xmlCompleto)?.groupValues?.get(1) ?: ""
             if (contenidoJson.isNotEmpty()) parsearKardex(contenidoJson) else emptyList()
@@ -103,10 +107,12 @@ class NetworkSNRepository(
     override fun obtenerKardexLocal(): Flow<List<Kardex>> = flowOf(emptyList())
     override suspend fun insertarKardexLocal(lista: List<Kardex>) {}
 
-    // NOTAS POR UNIDAD
+    // 📝 NOTAS POR UNIDAD
     override suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades> {
         return try {
-            // Reemplazar temporalmente con la simulación hasta estructurar los parseadores multiplataforma
+            val xmlEnvelope = getNotasUnidadesXml()
+            val response = snApiService.getNotesUnidades(xmlEnvelope)
+            val xmlCompleto = response.bodyAsText()
             emptyList()
         } catch (e: Exception) {
             emptyList()
@@ -116,14 +122,81 @@ class NetworkSNRepository(
     override fun obtenerNotasLocal(): Flow<List<MateriaUnidades>> = flowOf(emptyList())
     override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {}
 
-    // CALIFICACIONES FINALES
-    override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> = emptyList()
+    // 🏁 CALIFICACIONES FINALES
+    override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> {
+        return try {
+            val xmlEnvelope = getCalifFinalXml()
+            val response = snApiService.getCalifFinales(xmlEnvelope)
+            val xmlCompleto = response.bodyAsText()
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
     override fun obtenerFinalesLocal(): Flow<List<CalifFinal>> = flowOf(emptyList())
     override suspend fun insertarFinalesLocal(lista: List<CalifFinal>) {}
 
-    // PARSEADORES TEMPORALES
+
+    // 🛠️ GENERADORES DE ENVELOPES XML SOAP (Copiatelas de tu proyecto original si cambian los campos)
+    private fun getLoginXml(usuario: String, contrasenia: String): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <acceso xmlns="http://tempuri.org/">
+      <txtUsuario>$usuario</txtUsuario>
+      <txtContrasenia>$contrasenia</txtContrasenia>
+      <tipo>ALUMNO</tipo>
+    </acceso>
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
+    private fun getPerfilXml(matricula: String): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
+    private fun getCargaXml(): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getCargaAcademicaByAlumno xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
+    private fun getKardexXml(): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getAllKardexConPromedioByAlumno xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
+    private fun getNotasUnidadesXml(): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getCalifUnidadesByAlumno xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
+    private fun getCalifFinalXml(): String {
+        return """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getAllCalifFinalByAlumnos xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>"""
+    }
+
     private fun parsearKardex(jsonString: String): List<Kardex> {
-        // Estructuraremos esto usando kotlinx.serialization en el siguiente paso
         return emptyList()
     }
 }
