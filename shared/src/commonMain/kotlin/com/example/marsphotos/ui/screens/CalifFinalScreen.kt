@@ -1,6 +1,6 @@
-/*
 package com.example.marsphotos.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,13 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.marsphotos.model.CalifFinal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalifFinalScreen(
     viewModel: CalifFinalViewModel,
-    onBack: () -> Unit // Desacoplamos la navegación usando una lambda limpia
+    onBack: () -> Unit // Callback limpio para regresar al menú
 ) {
     val uiState = viewModel.uiState
     val isSyncing = uiState.isLoading
@@ -32,34 +33,39 @@ fun CalifFinalScreen(
             TopAppBar(
                 title = { Text("Calificaciones Finales", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    // Usamos un texto o un carácter simple temporal si el import de Icons da lata
-                    TextButton(onClick = onBack) {
-                        Text("< Volver", color = MaterialTheme.colorScheme.primary)
+                    // ◁ Botón de regreso idéntico al de Kardex y Unidades
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 12.dp, end = 4.dp)
+                            .clickable { onBack() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "◁",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-
-            uiState.listaFinal.firstOrNull()?.let {
-                Text(
-                    text = "Actualizado: ${it.fechaSincronizacion}",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(16.dp),
-                    color = Color.Gray
-                )
-            }
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
 
             if (isSyncing && uiState.listaFinal.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
+            } else if (!isSyncing && uiState.listaFinal.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No se encontraron calificaciones finales.", color = Color.Gray)
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
                 ) {
                     items(uiState.listaFinal) { item ->
                         CalifFinalCard(item)
@@ -90,7 +96,7 @@ fun CalifFinalCard(final: CalifFinal) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Grupo: ${final.grupo} • ${final.accreditation}", // Corregido con la 'c'
+                    text = "Grupo: ${final.grupo} • ${final.accreditation}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -104,12 +110,10 @@ fun CalifFinalCard(final: CalifFinal) {
                     text = if (final.calificacion > 0) final.calificacion.toString() else "NA",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     color = colorCalif,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black
                 )
             }
         }
     }
 }
-
- */

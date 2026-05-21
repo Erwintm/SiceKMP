@@ -2,7 +2,6 @@ package com.example.marsphotos.model
 
 import kotlinx.serialization.Serializable
 
-// Tu modelo de UI (el que usas en la pantalla)
 @Serializable
 data class CalifFinal(
     val id: Int = 0,
@@ -13,9 +12,7 @@ data class CalifFinal(
     var fechaSincronizacion: String = ""
 )
 
-// Modelos para recibir el JSON del SICE
-@Serializable
-data class FinalResponse(val lstCalificacionFinal: List<FinalRaw>)
+// ❌ Quitamos FinalResponse porque el JSON real empieza con [ y no con {
 
 @Serializable
 data class FinalRaw(

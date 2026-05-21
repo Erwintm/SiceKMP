@@ -193,7 +193,7 @@ class NetworkSNRepository(
 
     override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {}
 
-    // 🏁 CALIFICACIONES FINALES
+    // 🏁 CALIFICACIONES FINALES (🔥 Corregido para leer Arreglo JSON directo)
     override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> {
         return try {
             val xmlEnvelope = getCalifFinalXml()
@@ -203,11 +203,12 @@ class NetworkSNRepository(
             val contenidoJson = extraerJsonDeXml(xmlCompleto)
 
             if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
-                val jsonLimpio = contenidoJson.replace("\\", "")
+                val jsonLimpio = contenidoJson.replace("\\", "").trim()
                 val jsonConfig = Json { ignoreUnknownKeys = true }
 
-                val respuestaRaw = jsonConfig.decodeFromString<FinalResponse>(jsonLimpio)
-                val listaRemota = respuestaRaw.lstCalificacionFinal.map { raw ->
+                // 🎯 Deserializamos directamente la lista nativa del JSON sin objetos padres ficticios
+                val listaRaw = jsonConfig.decodeFromString<List<FinalRaw>>(jsonLimpio)
+                val listaRemota = listaRaw.map { raw ->
                     CalifFinal(
                         materia = raw.materia ?: "",
                         grupo = raw.grupo ?: "",
@@ -225,6 +226,7 @@ class NetworkSNRepository(
             }
         } catch (e: Exception) {
             println("❌ Error en Calif Finales KMP: ${e.message}")
+            e.printStackTrace()
             emptyList()
         }
     }
@@ -312,7 +314,7 @@ class NetworkSNRepository(
             println("✅ [ParsearNotas] Deserialización exitosa. Elementos encontrados: ${listaRaw.size}")
 
             val resultadoMapeado = listaRaw.map { raw ->
-                val notas = listOf(raw.C1, raw.C2, raw.C3, raw.C4, raw.C5, raw.C6, raw.C7)
+                val notes = listOf(raw.C1, raw.C2, raw.C3, raw.C4, raw.C5, raw.C6, raw.C7)
                     .map { nota ->
                         if (nota == null || nota.trim().lowercase() == "null" || nota.isBlank()) {
                             "-"
@@ -324,8 +326,8 @@ class NetworkSNRepository(
 
                 MateriaUnidades(
                     materia = raw.Materia ?: "Materia sin nombre",
-                    unidades = notas,
-                    fechaSincronizacion = "" // Quitamos la lógica de fechas problemáticas
+                    unidades = notes,
+                    fechaSincronizacion = ""
                 )
             }
 

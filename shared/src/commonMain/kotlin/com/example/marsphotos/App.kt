@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marsphotos.ui.AppViewModelProvider
+import com.example.marsphotos.ui.screens.CalifFinalScreen
 import com.example.marsphotos.ui.screens.CargaAcademicaScreen
 import com.example.marsphotos.ui.screens.KardexScreen
 import com.example.marsphotos.ui.screens.LoginPantalla
@@ -96,7 +97,13 @@ fun App() {
                 )
             }
             "FINALES" -> {
-                PantallaProvisional(titulo = "Calificaciones Finales") { currentScreen = "MENU" }
+                val finalesViewModel: com.example.marsphotos.ui.screens.CalifFinalViewModel =
+                    viewModel(factory = AppViewModelProvider.Factory)
+
+                CalifFinalScreen(
+                    viewModel = finalesViewModel,
+                    onBack = { currentScreen = "MENU" } // Regresa chido al menú principal
+                )
             }
         }
     }
