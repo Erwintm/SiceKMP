@@ -27,7 +27,8 @@ class SICENETWService(private val client: HttpClient) {
      */
     suspend fun getPerfil(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            header("SOAPAction", "http://tempuri.org/getAlumnoAcademicoWithLineamiento")
+            // 🔑 Agregamos las comillas internas obligatorias para .NET
+            header("SOAPAction", "\"http://tempuri.org/getAlumnoAcademicoWithLineamiento\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }

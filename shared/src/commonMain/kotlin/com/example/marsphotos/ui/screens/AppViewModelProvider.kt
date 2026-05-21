@@ -4,6 +4,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.marsphotos.data.AppContainer
 import com.example.marsphotos.ui.screens.LoginViewModel
+import com.example.marsphotos.ui.screens.PerfilViewModel // 👈 Asegúrate de importar el del perfil
 import com.example.marsphotos.ui.screens.CalifFinalViewModel
 
 object AppViewModelProvider {
@@ -18,7 +19,12 @@ object AppViewModelProvider {
             LoginViewModel(snRepository = container.snRepository)
         }
 
-        // 🏁 Inicializador para Calificaciones Finales (lo usaremos después)
+        // 👤 ¡Agrega este bloque para el Perfil de Alumno!
+        initializer {
+            PerfilViewModel(snRepository = container.snRepository)
+        }
+
+        // 🏁 Inicializador para Calificaciones Finales
         initializer {
             CalifFinalViewModel(container.snRepository)
         }

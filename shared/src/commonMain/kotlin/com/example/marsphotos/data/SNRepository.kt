@@ -63,31 +63,54 @@ class NetworkSNRepository(
         }
     }
 
-    // 👤 PERFIL
+    // 👤 PERFIL (Optimizado para procesar la respuesta real del SICE)
     override suspend fun profile(m: String): ProfileStudent {
         return try {
             val xmlEnvelope = getPerfilXml(m)
             val response = snApiService.getPerfil(xmlEnvelope)
             val xml = response.bodyAsText()
-            val jsonContent = Regex("""<getAlumnoAcademicoWithLineamientoResult>([^<]+)""").find(xml)?.groupValues?.get(1)
 
-            if (jsonContent != null) {
+            println("SICE_PROFILE_RAW: $xml")
+
+            // Extraemos todo lo que está dentro de la etiqueta del resultado
+            val jsonContent = Regex("""<getAlumnoAcademicoWithLineamientoResult>([\s\S]*?)</getAlumnoAcademicoWithLineamientoResult>""")
+                .find(xml)?.groupValues?.get(1)
+
+            if (!jsonContent.isNullOrEmpty()) {
+                // Removemos los escapes de barras invertidas para trabajar con texto plano limpio
+                val jsonLimpio = jsonContent.replace("\\", "")
+
+                // Buscamos los valores usando expresiones regulares tolerantes
+                val nombre = Regex(""""nombre":"([^"]+)"""").find(jsonLimpio)?.groupValues?.get(1) ?: "Estudiante"
+                val carrera = Regex(""""carrera":"([^"]+)"""").find(jsonLimpio)?.groupValues?.get(1) ?: "Carrera"
+
+                // El SICE en especialidad a veces devuelve la cadena de la especialidad directamente
+                val especialidad = Regex(""""especialidad":"([^"]+)"""").find(jsonLimpio)?.groupValues?.get(1) ?: "Sin Especialidad"
+
+                // Los números pueden o no venir acompañados de comillas según la versión del SICE
+                val semestre = Regex(""""semActual":\s*"?(\d+)"?""").find(jsonLimpio)?.groupValues?.get(1) ?: "0"
+                val creditos = Regex(""""cdtosAcumulados":\s*"?(\d+)"?""").find(jsonLimpio)?.groupValues?.get(1) ?: "0"
+                val fechaReins = Regex(""""fechaReins":"([^"]+)"""").find(jsonLimpio)?.groupValues?.get(1) ?: "No disponible"
+
                 ProfileStudent(
                     matricula = m,
-                    nombre = Regex("""\"nombre\":\"([^\"]+)""").find(jsonContent)?.groupValues?.get(1) ?: "Estudiante",
-                    carrera = Regex("""\"carrera\":\"([^\"]+)""").find(jsonContent)?.groupValues?.get(1) ?: "Carrera",
-                    promedio = Regex("""\"especialidad\":\"([^\"]+)""").find(jsonContent)?.groupValues?.get(1) ?: "Sin Especialidad",
-                    semestre = Regex("""\"semActual\":(\d+)""").find(jsonContent)?.groupValues?.get(1) ?: "0",
-                    creditos = Regex("""\"cdtosAcumulados\":(\d+)""").find(jsonContent)?.groupValues?.get(1) ?: "0",
-                    fechaReins = Regex("""\"fechaReins\":\"([^\"]+)""").find(jsonContent)?.groupValues?.get(1) ?: "No disponible"
+                    nombre = nombre,
+                    carrera = carrera,
+                    promedio = especialidad, // Lo mapeamos a especialidad para que coincida con tu interfaz
+                    semestre = semestre,
+                    creditos = creditos,
+                    fechaReins = fechaReins
                 )
             } else {
-                ProfileStudent(m, "Error", "Formato inválido", "", "", "", "")
+                ProfileStudent(m, "Error", "Formato XML inválido", "", "", "", "")
             }
         } catch (e: Exception) {
-            ProfileStudent(m, "Error de red", "", "", "", "", "")
+            println("SICE_PROFILE_ERROR: ${e.message}")
+            ProfileStudent(m, "Error de red", "${e.message}", "", "", "", "")
         }
     }
+
+
 
     // 📅 CARGA ACADÉMICA
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
