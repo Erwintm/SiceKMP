@@ -1,47 +1,44 @@
 package com.example.marsphotos
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.painterResource
-
-import sicekmp.shared.generated.resources.Res
-import sicekmp.shared.generated.resources.compose_multiplatform
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.marsphotos.ui.AppViewModelProvider
+import com.example.marsphotos.ui.screens.LoginPantalla
 
 @Composable
-@Preview
 fun App() {
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+        // Estado para controlar en qué pantalla estamos
+        var currentScreen by remember { mutableStateOf("LOGIN") }
+        var matriculaUsuario by remember { mutableStateOf("") }
+
+        when (currentScreen) {
+            "LOGIN" -> {
+                // Instanciamos el ViewModel usando nuestra Factory corregida
+                val loginViewModel: com.example.marsphotos.ui.screens.LoginViewModel = viewModel(factory = AppViewModelProvider.Factory)
+
+                LoginPantalla(
+                    viewModel = loginViewModel,
+                    onLoginSuccess = { matricula ->
+                        matriculaUsuario = matricula
+                        currentScreen = "HOME" // Cambia de pantalla cuando el SICE dé "success"
+                    }
+                )
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            "HOME" -> {
+                // Por ahora, un texto simple para saber que entramos.
+                // En la Etapa 3 crearemos el menú completo aquí.
+                androidx.compose.foundation.layout.Column(
+                    modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                 ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+                    androidx.compose.material3.Text("¡Lograste entrar! Matrícula: $matriculaUsuario")
+                    androidx.compose.material3.Button(onClick = { currentScreen = "LOGIN" }) {
+                        androidx.compose.material3.Text("Cerrar Sesión")
+                    }
                 }
             }
         }

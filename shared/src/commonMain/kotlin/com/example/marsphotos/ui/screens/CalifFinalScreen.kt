@@ -1,3 +1,4 @@
+/*
 package com.example.marsphotos.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -110,3 +111,5 @@ fun CalifFinalCard(final: CalifFinal) {
         }
     }
 }
+
+ */

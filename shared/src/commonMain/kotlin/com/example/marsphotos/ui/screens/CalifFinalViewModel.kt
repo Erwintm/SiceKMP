@@ -13,7 +13,7 @@ class CalifFinalViewModel(
     private val repository: SNRepository
 ) : ViewModel() {
 
-    // El repositorio retorna Flow<List<CalifFinal>> y lo convertimos a StateFlow
+    // El repositorio retorna Flow, convertimos a StateFlow para que la UI se pinte sola
     val uiState: StateFlow<List<CalifFinal>> = repository.obtenerFinalesLocal()
         .stateIn(
             scope = viewModelScope,
@@ -23,10 +23,9 @@ class CalifFinalViewModel(
 
     fun fetchAndSave() {
         viewModelScope.launch {
-            // 1. Traemos de la red
-            val lista = repository.fetchCalifFinalesRemote()
-            // 2. Insertamos en local (el repositorio ya debería tener la lógica de insertar)
-            repository.insertarFinalesLocal(lista)
+            // El repositorio ya contiene la lógica de llamar al servicio,
+            // convertir el JSON, mapear a CalifFinal e insertar en Room.
+            repository.fetchCalifFinalesRemote()
         }
     }
 }

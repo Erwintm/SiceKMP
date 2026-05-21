@@ -1,20 +1,20 @@
 package com.example.marsphotos.data
 
-import com.example.marsphotos.database.BaseDeDatosApp
+import com.example.marsphotos.database.CalifFinalDao
+import com.example.marsphotos.database.CalifFinalEntity
 import com.example.marsphotos.network.SICENETWService
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 interface AppContainer {
     val siceService: SICENETWService
     val snRepository: SNRepository
 }
 
-class DefaultAppContainer(
-    private val baseDeDatos: BaseDeDatosApp // <- Pasamos la BD para proveer sus DAOs
-) : AppContainer {
+class DefaultAppContainer : AppContainer {
 
-    // Cliente HTTP unificado con persistencia de cookies en memoria
     private val client = HttpClient {
         install(HttpCookies) {
             storage = AcceptAllCookiesStorage()
@@ -25,11 +25,25 @@ class DefaultAppContainer(
         SICENETWService(client)
     }
 
+    // 🎭 ENCAJAMOS LAS FUNCIONES REALES DE TU DAO
+    private val mockCalifFinalDao = object : CalifFinalDao {
+        override suspend fun guardarCalificacion(calificacion: CalifFinalEntity) {
+            // No hace nada por ahora
+        }
+
+        override fun obtenerTodasLasCalificacionesAsFlow(): Flow<List<CalifFinalEntity>> = flow {
+            emit(emptyList()) // Devuelve una lista vacía simulada
+        }
+
+        override suspend fun borrarTodas() {
+            // No hace nada por ahora
+        }
+    }
+
     override val snRepository: SNRepository by lazy {
-        // Le inyectamos el servicio remoto y el DAO local al repositorio
         NetworkSNRepository(
             snApiService = siceService,
-            califFinalDao = baseDeDatos.califFinalDao()
+            califFinalDao = mockCalifFinalDao
         )
     }
 }

@@ -1,7 +1,7 @@
 package com.example.marsphotos.data
+
 import com.example.marsphotos.database.CalifFinalDao
 import com.example.marsphotos.database.CalifFinalEntity
-
 import com.example.marsphotos.model.*
 import com.example.marsphotos.network.*
 import kotlinx.coroutines.flow.Flow
@@ -46,8 +46,19 @@ class NetworkSNRepository(
             val xmlEnvelope = getLoginXml(m, p)
             val response = snApiService.acceso(xmlEnvelope)
             val responseString = response.bodyAsText()
-            if (responseString.contains("\"acceso\":true", ignoreCase = true)) "success" else "invalid"
+
+            println("SICE_RESPONSE_RAW: $responseString")
+
+            // Flexibilizamos la búsqueda limpiando comillas y espacios de la respuesta SOAP
+            val respuestaLimpia = responseString.replace("\"", "").replace(" ", "")
+
+            if (respuestaLimpia.contains("acceso:true", ignoreCase = true)) {
+                "success"
+            } else {
+                "invalid"
+            }
         } catch (e: Exception) {
+            println("SICE_RESPONSE_ERROR: ${e.message}")
             "error"
         }
     }
@@ -161,15 +172,27 @@ class NetworkSNRepository(
                 CalifFinalEntity(
                     materia = item.materia,
                     grupo = item.grupo,
-                    calificacion = item.calificacion, // Ya es Int
+                    calificacion = item.calificacion,
                     accreditation = item.accreditation
                 )
             )
         }
     }
 
-    // 🛠️ XML Generators (Sin cambios)
-    private fun getLoginXml(usuario: String, contrasenia: String): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><acceso xmlns="http://tempuri.org/"><txtUsuario>$usuario</txtUsuario><txtContrasenia>$contrasenia</txtContrasenia><tipo>ALUMNO</tipo></acceso></soap:Body></soap:Envelope>"""
+    // 🛠️ XML Generators (Únicos y Actualizados)
+    private fun getLoginXml(usuario: String, contrasenia: String): String = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <accesoLogin xmlns="http://tempuri.org/">
+              <strMatricula>$usuario</strMatricula>
+              <strContrasenia>$contrasenia</strContrasenia>
+              <tipoUsuario>ALUMNO</tipoUsuario>
+            </accesoLogin>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
     private fun getPerfilXml(matricula: String): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
     private fun getCargaXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCargaAcademicaByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
     private fun getKardexXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAllKardexConPromedioByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""

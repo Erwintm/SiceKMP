@@ -8,14 +8,15 @@ import io.ktor.http.*
 class SICENETWService(private val client: HttpClient) {
 
     // URL base del servicio web del SICE
-    private val baseUrl = "http://sicenet.itsur.edu.mx/ws/wsalumnos.asmx"
+    private val baseUrl = "https://sicenet.itsur.edu.mx/ws/wsalumnos.asmx"
 
     /**
      * Hace el login enviando el sobre XML correspondiente a la API SOAP.
      */
     suspend fun acceso(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            header("SOAPAction", "http://tempuri.org/acceso")
+            // 🔑 ACTUALIZADO: Ahora apunta exactamente a accesoLogin con comillas explícitas
+            header("SOAPAction", "\"http://tempuri.org/accesoLogin\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }
