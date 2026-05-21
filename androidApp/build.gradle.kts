@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android") // <-- Esto es lo que faltaba para que reconozca el bloque kotlin {}
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    id("com.google.devtools.ksp")
 }
 
 kotlin {
@@ -20,6 +21,12 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    val room_version = "2.6.1" // Usa la última versión estable
+
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
 }
 
 android {

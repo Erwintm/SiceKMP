@@ -1,4 +1,4 @@
-package com.example.marsphotos.data // Ajusta esto a tu paquete real
+package com.example.marsphotos.database // Ajusta esto a tu paquete real
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

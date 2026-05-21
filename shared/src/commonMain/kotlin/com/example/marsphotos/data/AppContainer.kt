@@ -1,5 +1,6 @@
 package com.example.marsphotos.data
 
+import com.example.marsphotos.database.BaseDeDatosApp
 import com.example.marsphotos.network.SICENETWService
 import io.ktor.client.*
 import io.ktor.client.plugins.cookies.*
@@ -9,9 +10,11 @@ interface AppContainer {
     val snRepository: SNRepository
 }
 
-class DefaultAppContainer : AppContainer {
+class DefaultAppContainer(
+    private val baseDeDatos: BaseDeDatosApp // <- Pasamos la BD para proveer sus DAOs
+) : AppContainer {
 
-    // Cliente HTTP unificado con persistencia de cookies en memoria para todas las plataformas
+    // Cliente HTTP unificado con persistencia de cookies en memoria
     private val client = HttpClient {
         install(HttpCookies) {
             storage = AcceptAllCookiesStorage()
@@ -23,7 +26,10 @@ class DefaultAppContainer : AppContainer {
     }
 
     override val snRepository: SNRepository by lazy {
-        // Le pasamos el servicio de red a tu repositorio para que parsee los datos
-        NetworkSNRepository(siceService)
+        // Le inyectamos el servicio remoto y el DAO local al repositorio
+        NetworkSNRepository(
+            snApiService = siceService,
+            califFinalDao = baseDeDatos.califFinalDao()
+        )
     }
 }
