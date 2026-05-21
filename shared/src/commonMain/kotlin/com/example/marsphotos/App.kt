@@ -14,6 +14,7 @@ import com.example.marsphotos.ui.screens.CargaAcademicaScreen
 import com.example.marsphotos.ui.screens.KardexScreen
 import com.example.marsphotos.ui.screens.LoginPantalla
 import com.example.marsphotos.ui.screens.MenuScreen
+import com.example.marsphotos.ui.screens.NotasUnidadesScreen
 import com.example.marsphotos.ui.screens.PerfilPantalla
 import com.example.marsphotos.ui.screens.PerfilViewModel
 
@@ -86,7 +87,13 @@ fun App() {
                 )
             }
             "NOTAS" -> {
-                PantallaProvisional(titulo = "Calificaciones por Unidad") { currentScreen = "MENU" }
+                val notasViewModel: com.example.marsphotos.ui.screens.NotasUnidadesViewModel =
+                    viewModel(factory = AppViewModelProvider.Factory)
+
+                NotasUnidadesScreen(
+                    viewModel = notasViewModel,
+                    onVolver = { currentScreen = "MENU" } // 👈 Conectamos el botón de regreso al mosaico principal
+                )
             }
             "FINALES" -> {
                 PantallaProvisional(titulo = "Calificaciones Finales") { currentScreen = "MENU" }

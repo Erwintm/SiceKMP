@@ -11,16 +11,16 @@ data class MateriaUnidades(
 )
 
 @Serializable
-data class UnidadesResponse(val lstCalificacionUnidades: List<UnidadesRaw>)
-
-@Serializable
 data class UnidadesRaw(
-    val Materia: String?,
-    val C1: String?,
-    val C2: String?,
-    val C3: String?,
-    val C4: String?,
-    val C5: String?,
-    val C6: String?,
-    val C7: String?
+    val Materia: String? = null,
+    val Grupo: String? = null,
+    val UnidadesActivas: String? = null,
+    val C1: String? = null,
+    val C2: String? = null,
+    val C3: String? = null,
+    val C4: String? = null,
+    val C5: String? = null,
+    val C6: String? = null,
+    val C7: String? = null,
+    val Observaciones: String? = null
 )

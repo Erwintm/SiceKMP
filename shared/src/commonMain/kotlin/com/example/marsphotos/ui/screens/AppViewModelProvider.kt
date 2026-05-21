@@ -9,6 +9,7 @@ import com.example.marsphotos.ui.screens.PerfilViewModel // 👈 Asegúrate de i
 import com.example.marsphotos.ui.screens.CalifFinalViewModel
 import com.example.marsphotos.ui.screens.CargaViewModel
 import com.example.marsphotos.ui.screens.KardexViewModel
+import com.example.marsphotos.ui.screens.NotasUnidadesViewModel
 
 object AppViewModelProvider {
 
@@ -40,5 +41,10 @@ object AppViewModelProvider {
         initializer {
             KardexViewModel(repository = container.snRepository as NetworkSNRepository)
         }
+
+        initializer {
+            NotasUnidadesViewModel(repository = container.snRepository)
+        }
+
     }
 }

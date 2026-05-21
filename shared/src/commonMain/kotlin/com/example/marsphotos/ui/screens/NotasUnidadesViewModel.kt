@@ -22,22 +22,18 @@ class NotasUnidadesViewModel(
     var uiState by mutableStateOf(NotasUiState())
         private set
 
-    init {
-        viewModelScope.launch {
-            repository.obtenerNotasLocal().collect { lista ->
-                uiState = uiState.copy(materias = lista)
-            }
-        }
-    }
+    // Quitamos la recolección del flujo local del init para que no interfiera
+    init { }
 
     fun cargarNotas() {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true)
             try {
+                // 1. Traemos los datos directamente de la API remota
                 val remotas = repository.fetchNotasUnidadesRemote()
-                if (remotas.isNotEmpty()) {
-                    repository.insertarNotasLocal(remotas)
-                }
+
+                // 2. Los asignamos directo al estado de la UI de forma inmediata
+                uiState = uiState.copy(materias = remotas, error = null)
             } catch (e: Exception) {
                 uiState = uiState.copy(error = e.message)
             } finally {

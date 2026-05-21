@@ -1,5 +1,6 @@
 package com.example.marsphotos.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,10 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.marsphotos.model.MateriaUnidades
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotasUnidadesScreen(viewModel: NotasUnidadesViewModel) {
+fun NotasUnidadesScreen(
+    viewModel: NotasUnidadesViewModel,
+    onVolver: () -> Unit // 👈 Agregamos el callback para regresar al menú
+) {
     val uiState = viewModel.uiState
     val isSyncing = uiState.isLoading
 
@@ -24,24 +30,66 @@ fun NotasUnidadesScreen(viewModel: NotasUnidadesViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Calificaciones por Unidad") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Calificaciones por Unidad", fontWeight = FontWeight.Bold) },
+                navigationIcon = { // 👈 Clonamos exactamente el mismo diseño de navegación del Kardex
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 12.dp, end = 4.dp)
+                            .clickable { onVolver() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "◁",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            )
+        }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Mostrar fecha de sincronización si existen datos
             uiState.materias.firstOrNull()?.let {
-                Text(
-                    text = "Última sincronización: ${it.fechaSincronizacion}",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = Color.Gray
-                )
+                if (it.fechaSincronizacion.isNotBlank()) {
+                    Text(
+                        text = "Última sincronización: ${it.fechaSincronizacion}",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = Color.Gray
+                    )
+                }
             }
 
             if (isSyncing && uiState.materias.isEmpty()) {
+                // Pantalla de carga inicial
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
+            } else if (!isSyncing && uiState.materias.isEmpty()) {
+                // Mensaje por si la API no devuelve nada
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "No hay calificaciones disponibles localmente.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
             } else {
-                LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+                // Lista de materias
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
                     items(uiState.materias) { materia ->
                         MateriaNotaCard(materia.materia, materia.unidades)
                     }

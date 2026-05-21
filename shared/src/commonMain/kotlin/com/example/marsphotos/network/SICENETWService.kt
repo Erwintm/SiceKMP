@@ -60,9 +60,13 @@ class SICENETWService(private val client: HttpClient) {
     /**
      * Recupera las calificaciones parciales por unidad.
      */
-    suspend fun getNotesUnidades(requestBody: String): HttpResponse {
+    /**
+     * Recupera las calificaciones parciales por unidad.
+     */
+    suspend fun getNotasUnidades(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            header("SOAPAction", "http://tempuri.org/getCalifUnidadesByAlumno")
+            // 🔑 CORREGIDO: Comillas dobles obligatorias para .NET
+            header("SOAPAction", "\"http://tempuri.org/getCalifUnidadesByAlumno\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }

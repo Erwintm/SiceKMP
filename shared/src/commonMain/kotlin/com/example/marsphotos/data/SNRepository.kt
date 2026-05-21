@@ -22,7 +22,7 @@ interface SNRepository {
     fun obtenerCarga(): Flow<List<CargaAcademica>>
     suspend fun insertLocalCarga(materias: List<CargaAcademica>)
 
-    // Kardex (Regresamos a la firma original sin matrícula)
+    // Kardex
     suspend fun fetchKardexRemote(): List<Kardex>
     fun obtenerKardexLocal(): Flow<List<Kardex>>
     suspend fun insertarKardexLocal(lista: List<Kardex>)
@@ -115,6 +115,10 @@ class NetworkSNRepository(
             if (jsonString.isNotBlank()) {
                 val jsonConfig = Json { ignoreUnknownKeys = true }
                 val listaMaterias = jsonConfig.decodeFromString<List<CargaAcademica>>(jsonString)
+
+                if (listaMaterias.isNotEmpty()) {
+                    insertLocalCarga(listaMaterias)
+                }
                 listaMaterias
             } else {
                 emptyList()
@@ -125,72 +129,68 @@ class NetworkSNRepository(
         }
     }
 
-    private fun extraerJsonDeXml(xml: String): String {
-        return try {
-            val inicioArreglo = xml.indexOf("[")
-            val inicioObjeto = xml.indexOf("{")
-
-            val inicio = if (inicioArreglo != -1 && (inicioObjeto == -1 || inicioArreglo < inicioObjeto)) inicioArreglo else inicioObjeto
-            val fin = if (inicio == inicioArreglo) xml.lastIndexOf("]") + 1 else xml.lastIndexOf("}") + 1
-
-            if (inicio != -1 && fin != -1) {
-                xml.substring(inicio, fin)
-            } else {
-                ""
-            }
-        } catch (e: Exception) {
-            ""
-        }
+    override fun obtenerCarga(): Flow<List<CargaAcademica>> {
+        return flowOf(emptyList())
     }
 
-    override fun obtenerCarga(): Flow<List<CargaAcademica>> = flowOf(emptyList())
     override suspend fun insertLocalCarga(materias: List<CargaAcademica>) {}
 
-    // 📜 KARDEX (Regresado a su estado original sin matrícula)
     // 📜 KARDEX
     override suspend fun fetchKardexRemote(): List<Kardex> {
         return try {
-
             val xmlEnvelope = getKardexXml()
-
             val response = snApiService.getKardex(xmlEnvelope)
             val xmlCompleto = response.bodyAsText()
 
-
-
-            // Usamos el extractor de JSON seguro basado en índices de caracteres [ ]
             val contenidoJson = extraerJsonDeXml(xmlCompleto)
 
-
-
             if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
-                parsearKardex(contenidoJson)
+                val listaKardex = parsearKardex(contenidoJson)
+                if (listaKardex.isNotEmpty()) {
+                    insertarKardexLocal(listaKardex)
+                }
+                listaKardex
             } else {
                 emptyList()
             }
         } catch (e: Exception) {
-
             e.printStackTrace()
             emptyList()
         }
     }
 
-    override fun obtenerKardexLocal(): Flow<List<Kardex>> = flowOf(emptyList())
+    override fun obtenerKardexLocal(): Flow<List<Kardex>> {
+        return flowOf(emptyList())
+    }
+
     override suspend fun insertarKardexLocal(lista: List<Kardex>) {}
 
-    // 📝 NOTAS POR UNIDAD
+    // 📝 NOTAS POR UNIDAD (Pasando olímpicamente de Room)
     override suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades> {
         return try {
+            println("📡 [Notas] Enviando petición al SICE...")
             val xmlEnvelope = getNotasUnidadesXml()
-            val response = snApiService.getNotesUnidades(xmlEnvelope)
+            val response = snApiService.getNotasUnidades(xmlEnvelope)
             val xmlCompleto = response.bodyAsText()
-            emptyList()
+
+            val contenidoJson = extraerJsonDeXml(xmlCompleto)
+
+            if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
+                parsearNotas(contenidoJson)
+            } else {
+                emptyList()
+            }
         } catch (e: Exception) {
+            println("❌ Error crítico en Notas Unidades: ${e.message}")
+            e.printStackTrace()
             emptyList()
         }
     }
 
-    override fun obtenerNotasLocal(): Flow<List<MateriaUnidades>> = flowOf(emptyList())
+    override fun obtenerNotasLocal(): Flow<List<MateriaUnidades>> {
+        return flowOf(emptyList())
+    }
+
     override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {}
 
     // 🏁 CALIFICACIONES FINALES
@@ -199,12 +199,32 @@ class NetworkSNRepository(
             val xmlEnvelope = getCalifFinalXml()
             val response = snApiService.getCalifFinales(xmlEnvelope)
             val xmlCompleto = response.bodyAsText()
-            val listaRemota = emptyList<CalifFinal>()
-            if (listaRemota.isNotEmpty()) {
-                insertarFinalesLocal(listaRemota)
+
+            val contenidoJson = extraerJsonDeXml(xmlCompleto)
+
+            if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
+                val jsonLimpio = contenidoJson.replace("\\", "")
+                val jsonConfig = Json { ignoreUnknownKeys = true }
+
+                val respuestaRaw = jsonConfig.decodeFromString<FinalResponse>(jsonLimpio)
+                val listaRemota = respuestaRaw.lstCalificacionFinal.map { raw ->
+                    CalifFinal(
+                        materia = raw.materia ?: "",
+                        grupo = raw.grupo ?: "",
+                        calificacion = raw.calif ?: 0,
+                        accreditation = raw.acred ?: ""
+                    )
+                }
+
+                if (listaRemota.isNotEmpty()) {
+                    insertarFinalesLocal(listaRemota)
+                }
+                listaRemota
+            } else {
+                emptyList()
             }
-            listaRemota
         } catch (e: Exception) {
+            println("❌ Error en Calif Finales KMP: ${e.message}")
             emptyList()
         }
     }
@@ -236,37 +256,24 @@ class NetworkSNRepository(
         }
     }
 
-    // 🛠️ XML Generators (Tal y como los tenías en tu app estable)
-    private fun getLoginXml(usuario: String, contrasenia: String): String = """
-        <?xml version="1.0" encoding="utf-8"?>
-        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-          <soap:Body>
-            <accesoLogin xmlns="http://tempuri.org/">
-              <strMatricula>$usuario</strMatricula>
-              <strContrasenia>$contrasenia</strContrasenia>
-              <tipoUsuario>ALUMNO</tipoUsuario>
-            </accesoLogin>
-          </soap:Body>
-        </soap:Envelope>
-    """.trimIndent()
+    // 🛠️ AUXILIARES Y PARSEADORES
+    private fun extraerJsonDeXml(xml: String): String {
+        return try {
+            val inicioArreglo = xml.indexOf("[")
+            val inicioObjeto = xml.indexOf("{")
 
+            val inicio = if (inicioArreglo != -1 && (inicioObjeto == -1 || inicioArreglo < inicioObjeto)) inicioArreglo else inicioObjeto
+            val fin = if (inicio == inicioArreglo) xml.lastIndexOf("]") + 1 else xml.lastIndexOf("}") + 1
 
-    // 🔑 CORREGIDO: Ahora incluye la etiqueta obligatoria dictada por la documentación
-    private fun getKardexXml(): String = """
-        <?xml version="1.0" encoding="utf-8"?>
-        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-          <soap:Body>
-            <getAllKardexConPromedioByAlumno xmlns="http://tempuri.org/">
-              <aluLineamiento>1</aluLineamiento>
-            </getAllKardexConPromedioByAlumno>
-          </soap:Body>
-        </soap:Envelope>
-    """.trimIndent()
-
-    private fun getPerfilXml(matricula: String): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
-    private fun getCargaXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCargaAcademicaByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
-    private fun getNotasUnidadesXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCalifUnidadesByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
-    private fun getCalifFinalXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAllCalifFinalByAlumnos xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+            if (inicio != -1 && fin != -1) {
+                xml.substring(inicio, fin)
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     private fun parsearKardex(jsonString: String): List<Kardex> {
         return try {
@@ -290,4 +297,75 @@ class NetworkSNRepository(
             emptyList()
         }
     }
+
+    private fun parsearNotas(jsonString: String): List<MateriaUnidades> {
+        return try {
+            val jsonLimpio = jsonString.trim()
+            val jsonConfig = Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            }
+
+            println("ℹ️ [ParsearNotas] Intentando decodificar un JSON de longitud: ${jsonLimpio.length}")
+
+            val listaRaw = jsonConfig.decodeFromString<List<UnidadesRaw>>(jsonLimpio)
+            println("✅ [ParsearNotas] Deserialización exitosa. Elementos encontrados: ${listaRaw.size}")
+
+            val resultadoMapeado = listaRaw.map { raw ->
+                val notas = listOf(raw.C1, raw.C2, raw.C3, raw.C4, raw.C5, raw.C6, raw.C7)
+                    .map { nota ->
+                        if (nota == null || nota.trim().lowercase() == "null" || nota.isBlank()) {
+                            "-"
+                        } else {
+                            nota.trim()
+                        }
+                    }
+                    .joinToString(",")
+
+                MateriaUnidades(
+                    materia = raw.Materia ?: "Materia sin nombre",
+                    unidades = notas,
+                    fechaSincronizacion = "" // Quitamos la lógica de fechas problemáticas
+                )
+            }
+
+            println("🚀 [ParsearNotas] Mapeo completado con éxito. Retornando ${resultadoMapeado.size} registros.")
+            resultadoMapeado
+
+        } catch (e: Exception) {
+            println("❌ [ParsearNotas] ERROR CRÍTICO: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    // 🛠️ GENERADORES XML (SOAP)
+    private fun getLoginXml(usuario: String, contrasenia: String): String = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <accesoLogin xmlns="http://tempuri.org/">
+              <strMatricula>$usuario</strMatricula>
+              <strContrasenia>$contrasenia</strContrasenia>
+              <tipoUsuario>ALUMNO</tipoUsuario>
+            </accesoLogin>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private fun getKardexXml(): String = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getAllKardexConPromedioByAlumno xmlns="http://tempuri.org/">
+              <aluLineamiento>1</aluLineamiento>
+            </getAllKardexConPromedioByAlumno>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private fun getPerfilXml(matricula: String): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+    private fun getCargaXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCargaAcademicaByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+    private fun getNotasUnidadesXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCalifUnidadesByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+    private fun getCalifFinalXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAllCalifFinalByAlumnos xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
 }
