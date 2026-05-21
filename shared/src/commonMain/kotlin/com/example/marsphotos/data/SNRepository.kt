@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import io.ktor.client.statement.*
-
+import kotlinx.serialization.json.Json
 interface SNRepository {
     // Auth & Perfil
     suspend fun acceso(m: String, p: String): String
@@ -113,14 +113,53 @@ class NetworkSNRepository(
 
 
     // 📅 CARGA ACADÉMICA
+
+
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
         return try {
             val xmlEnvelope = getCargaXml()
             val response = snApiService.getCarga(xmlEnvelope)
             val xmlCompleto = response.bodyAsText()
-            emptyList()
+
+            // 🔬 1. Extraemos el JSON que el SICE esconde dentro del XML
+            val jsonString = extraerJsonDeXml(xmlCompleto)
+
+            if (jsonString.isNotBlank()) {
+                // 🧩 2. Configuramos Json para que ignore campos nuevos si los hay
+                val jsonConfig = Json { ignoreUnknownKeys = true }
+
+                // 🚀 3. Parseamos el JSON real a tu lista de CargaAcademica
+                val listaMaterias = jsonConfig.decodeFromString<List<CargaAcademica>>(jsonString)
+
+                // Opcional: Le estampamos la hora de actualización si lo necesitas
+                val horaActual = "" // Puedes dejarlo vacío o meterle un formateador de fecha luego
+                listaMaterias.forEach { it.fechaSincronizacion = horaActual }
+
+                listaMaterias
+            } else {
+                emptyList()
+            }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
+        }
+    }
+
+    /**
+     * Función auxiliar para limpiar las etiquetas SOAP del SICE y quedarnos solo con el [ ] del JSON
+     */
+    private fun extraerJsonDeXml(xml: String): String {
+        return try {
+            // Buscamos dónde abre el arreglo de JSON y dónde cierra
+            val inicio = xml.indexOf("[")
+            val fin = xml.lastIndexOf("]") + 1
+            if (inicio != -1 && fin != -1) {
+                xml.substring(inicio, fin)
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            ""
         }
     }
 

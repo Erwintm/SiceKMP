@@ -1,16 +1,20 @@
 package com.example.marsphotos
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marsphotos.ui.AppViewModelProvider
+import com.example.marsphotos.ui.screens.CargaAcademicaScreen
 import com.example.marsphotos.ui.screens.LoginPantalla
+import com.example.marsphotos.ui.screens.MenuScreen
 import com.example.marsphotos.ui.screens.PerfilPantalla
 import com.example.marsphotos.ui.screens.PerfilViewModel
-// import com.example.marsphotos.ui.screens.MenuScreen // 👈 Descomenta esto cuando migremos tu Menú
 
 @Composable
 fun App() {
@@ -34,7 +38,6 @@ fun App() {
             }
 
             "PERFIL" -> {
-                // Instanciamos el PerfilViewModel usando el mismo Provider centralizado
                 val perfilViewModel: PerfilViewModel =
                     viewModel(factory = AppViewModelProvider.Factory)
 
@@ -42,29 +45,63 @@ fun App() {
                     matricula = matriculaUsuario,
                     viewModel = perfilViewModel,
                     onNavigateToMenu = {
-                        currentScreen = "MENU" // ➡️ Al dar "Ir al menú", avanza al Portal Integral
+                        currentScreen = "MENU" // ➡️ Al dar "Ir al menú", avanza al mosaico
                     }
                 )
             }
 
             "MENU" -> {
-                // 🚪 Menú provisional corregido
-                androidx.compose.foundation.layout.Column(
-                    modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally // Corregido aquí
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "Portal Integral (Menú)",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.height(16.dp))
-
-                    androidx.compose.material3.Button(onClick = { currentScreen = "LOGIN" }) {
-                        androidx.compose.material3.Text("Cerrar Sesión")
+                // 🚪 Invocamos tu menú en cuadrícula real
+                MenuScreen(
+                    onNavigate = { rutaDestino ->
+                        when (rutaDestino) {
+                            "carga"   -> currentScreen = "CARGA"
+                            "kardex"  -> currentScreen = "KARDEX"
+                            "notas"   -> currentScreen = "NOTAS"
+                            "finales" -> currentScreen = "FINALES"
+                            else      -> currentScreen = "MENU"
+                        }
                     }
-                }
+                )
             }
+
+            // 📚 Estados provisionales para el resto de tus pantallas del SICE
+            "CARGA" -> {
+                val cargaViewModel: com.example.marsphotos.ui.screens.CargaViewModel =
+                    viewModel(factory = AppViewModelProvider.Factory)
+
+                CargaAcademicaScreen(
+                    viewModel = cargaViewModel,
+                    onVolver = { currentScreen = "MENU" }
+                )
+            }
+            "KARDEX" -> {
+                PantallaProvisional(titulo = "Kardex Escolar") { currentScreen = "MENU" }
+            }
+            "NOTAS" -> {
+                PantallaProvisional(titulo = "Calificaciones por Unidad") { currentScreen = "MENU" }
+            }
+            "FINALES" -> {
+                PantallaProvisional(titulo = "Calificaciones Finales") { currentScreen = "MENU" }
+            }
+        }
+    }
+}
+
+/**
+ * Contenedor genérico temporal para simular las pantallas restantes
+ */
+@Composable
+fun PantallaProvisional(titulo: String, onVolver: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = titulo, style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onVolver) {
+            Text("Volver al Menú Integral")
         }
     }
 }

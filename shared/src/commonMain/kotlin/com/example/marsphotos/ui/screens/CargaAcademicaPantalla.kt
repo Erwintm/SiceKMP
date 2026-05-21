@@ -1,6 +1,7 @@
 package com.example.marsphotos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,9 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.marsphotos.model.CargaAcademica
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CargaAcademicaScreen(
-    viewModel: CargaViewModel
+    viewModel: CargaViewModel,
+    onVolver: () -> Unit
 ) {
     val listaCarga by viewModel.materias.collectAsState()
     val estaSincronizando = viewModel.estaSincronizando
@@ -30,37 +33,78 @@ fun CargaAcademicaScreen(
         viewModel.sincronizarCarga()
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF2F2F2))) {
-        if (listaCarga.isNotEmpty()) {
-            val fecha = listaCarga.first().fechaSincronizacion
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFE8F5E9)
-            ) {
-                Text(
-                    text = "Actualizado: $fecha",
-                    modifier = Modifier.padding(8.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF2E7D32),
-                    textAlign = TextAlign.Center
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Mi Carga Académica", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                navigationIcon = {
+                    // ⬅️ Dibujamos un botón de regreso limpio con texto simulando la flecha para evitar fallas de librería
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 12.dp, end = 4.dp)
+                            .clickable { onVolver() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "◁",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1B5E20),
+                    titleContentColor = Color.White
                 )
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Color(0xFFF2F2F2))
+        ) {
+            if (listaCarga.isNotEmpty()) {
+                val fecha = listaCarga.first().fechaSincronizacion
+                if (fecha.isNotBlank()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFFE8F5E9)
+                    ) {
+                        Text(
+                            text = "Actualizado: $fecha",
+                            modifier = Modifier.padding(8.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF2E7D32),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
-        }
 
-        Surface(modifier = Modifier.fillMaxWidth(), color = Color(0xFF1B5E20)) {
-            Row(modifier = Modifier.padding(12.dp)) {
-                Text("MATERIA / DOCENTE", color = Color.White, modifier = Modifier.weight(2.5f), style = MaterialTheme.typography.labelLarge)
-                Text("HORARIO", color = Color.White, modifier = Modifier.weight(1.5f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelLarge)
+            Surface(modifier = Modifier.fillMaxWidth(), color = Color(0xFF2E7D32)) {
+                Row(modifier = Modifier.padding(12.dp)) {
+                    Text("MATERIA / DOCENTE", color = Color.White, modifier = Modifier.weight(2.5f), style = MaterialTheme.typography.labelLarge)
+                    Text("HORARIO", color = Color.White, modifier = Modifier.weight(1.5f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelLarge)
+                }
             }
-        }
 
-        if (estaSincronizando) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = Color(0xFFE65100))
-        }
+            if (estaSincronizando) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = Color(0xFFE65100))
+            }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(listaCarga) { materia ->
-                CargaItemRow(materia)
+            if (!estaSincronizando && listaCarga.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No se encontraron materias cargadas.", color = Color.Gray)
+                }
+            }
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(listaCarga) { materia ->
+                    CargaItemRow(materia)
+                }
             }
         }
     }

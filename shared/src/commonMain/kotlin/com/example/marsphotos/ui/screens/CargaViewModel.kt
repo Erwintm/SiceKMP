@@ -4,39 +4,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.marsphotos.data.SNRepository
+import com.example.marsphotos.data.NetworkSNRepository
 import com.example.marsphotos.model.CargaAcademica
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CargaViewModel(
-    private val repository: SNRepository
+    private val repository: NetworkSNRepository // Usamos tu repositorio real conectado a Ktor
 ) : ViewModel() {
 
-    // Cambiamos a un estado simple para controlar la carga visual de sincronización
     var estaSincronizando: Boolean by androidx.compose.runtime.mutableStateOf(false)
         private set
 
-    val materias: StateFlow<List<CargaAcademica>> = repository.obtenerCarga()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val _materias = MutableStateFlow<List<CargaAcademica>>(emptyList())
+    val materias: StateFlow<List<CargaAcademica>> = _materias.asStateFlow()
 
     fun sincronizarCarga() {
         viewModelScope.launch {
             estaSincronizando = true
             try {
-                // Llama directo a la red a través del repositorio multiplataforma
+                println("📡 Intentando traer carga académica desde el repositorio...")
                 val remotas = repository.traerCargaAcademica()
+
+             
+
                 if (remotas.isNotEmpty()) {
-                    repository.insertLocalCarga(remotas)
+                    _materias.value = remotas
+
+                } else {
+
                 }
             } catch (e: Exception) {
-                // Manejo de errores silencioso o de red
+
+                e.printStackTrace()
             } finally {
                 estaSincronizando = false
             }
