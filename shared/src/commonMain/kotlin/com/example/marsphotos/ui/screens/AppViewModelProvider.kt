@@ -3,9 +3,10 @@ package com.example.marsphotos.ui
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.marsphotos.data.AppContainer
+import com.example.marsphotos.data.DefaultAppContainer
 import com.example.marsphotos.data.NetworkSNRepository
 import com.example.marsphotos.ui.screens.LoginViewModel
-import com.example.marsphotos.ui.screens.PerfilViewModel // 👈 Asegúrate de importar el del perfil
+import com.example.marsphotos.ui.screens.PerfilViewModel
 import com.example.marsphotos.ui.screens.CalifFinalViewModel
 import com.example.marsphotos.ui.screens.CargaViewModel
 import com.example.marsphotos.ui.screens.KardexViewModel
@@ -13,9 +14,19 @@ import com.example.marsphotos.ui.screens.NotasUnidadesViewModel
 
 object AppViewModelProvider {
 
-    // Una variable global temporal para guardar nuestro contenedor en KMP
-    // Se inicializará cuando la app arranque
-    lateinit var container: AppContainer
+    private var _container: AppContainer? = null
+
+    // 🎯 Propiedad inteligente: Si Android no la define, Desktop/Web la crean solas
+    var container: AppContainer
+        get() {
+            if (_container == null) {
+                _container = DefaultAppContainer()
+            }
+            return _container!!
+        }
+        set(value) {
+            _container = value
+        }
 
     val Factory = viewModelFactory {
         // 🔐 Inicializador para tu Login
@@ -34,7 +45,6 @@ object AppViewModelProvider {
         }
 
         initializer {
-            // Cambiamos 'snRepository =' por 'repository ='
             CargaViewModel(repository = container.snRepository as NetworkSNRepository)
         }
 
@@ -45,6 +55,5 @@ object AppViewModelProvider {
         initializer {
             NotasUnidadesViewModel(repository = container.snRepository)
         }
-
     }
 }

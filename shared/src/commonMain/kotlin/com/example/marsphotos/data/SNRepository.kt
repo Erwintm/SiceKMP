@@ -1,15 +1,10 @@
 package com.example.marsphotos.data
 
-import com.example.marsphotos.database.CalifFinalDao
-import com.example.marsphotos.database.CalifFinalEntity
 import com.example.marsphotos.model.*
 import com.example.marsphotos.network.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.http.*
 import kotlinx.serialization.json.Json
 
 interface SNRepository {
@@ -39,8 +34,7 @@ interface SNRepository {
 }
 
 class NetworkSNRepository(
-    private val snApiService: SICENETWService,
-    private val califFinalDao: CalifFinalDao
+    private val snApiService: SICENETWService
 ) : SNRepository {
 
     // 🔐 AUTENTICACIÓN
@@ -165,7 +159,7 @@ class NetworkSNRepository(
 
     override suspend fun insertarKardexLocal(lista: List<Kardex>) {}
 
-    // 📝 NOTAS POR UNIDAD (Pasando olímpicamente de Room)
+    // 📝 NOTAS POR UNIDAD
     override suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades> {
         return try {
             println("📡 [Notas] Enviando petición al SICE...")
@@ -193,7 +187,7 @@ class NetworkSNRepository(
 
     override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {}
 
-    // 🏁 CALIFICACIONES FINALES (🔥 Corregido para leer Arreglo JSON directo)
+    // 🏁 CALIFICACIONES FINALES
     override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> {
         return try {
             val xmlEnvelope = getCalifFinalXml()
@@ -206,7 +200,6 @@ class NetworkSNRepository(
                 val jsonLimpio = contenidoJson.replace("\\", "").trim()
                 val jsonConfig = Json { ignoreUnknownKeys = true }
 
-                // 🎯 Deserializamos directamente la lista nativa del JSON sin objetos padres ficticios
                 val listaRaw = jsonConfig.decodeFromString<List<FinalRaw>>(jsonLimpio)
                 val listaRemota = listaRaw.map { raw ->
                     CalifFinal(
@@ -231,32 +224,12 @@ class NetworkSNRepository(
         }
     }
 
+    // 🎯 Flujo local vacío en memoria para evitar colgar de un Dao inexistente
     override fun obtenerFinalesLocal(): Flow<List<CalifFinal>> {
-        return califFinalDao.obtenerTodasLasCalificacionesAsFlow().map { entidades ->
-            entidades.map { entidad ->
-                CalifFinal(
-                    materia = entidad.materia,
-                    grupo = entidad.grupo,
-                    calificacion = entidad.calificacion,
-                    accreditation = entidad.accreditation
-                )
-            }
-        }
+        return flowOf(emptyList())
     }
 
-    override suspend fun insertarFinalesLocal(lista: List<CalifFinal>) {
-        califFinalDao.borrarTodas()
-        for (item in lista) {
-            califFinalDao.guardarCalificacion(
-                CalifFinalEntity(
-                    materia = item.materia,
-                    grupo = item.grupo,
-                    calificacion = item.calificacion,
-                    accreditation = item.accreditation
-                )
-            )
-        }
-    }
+    override suspend fun insertarFinalesLocal(lista: List<CalifFinal>) {}
 
     // 🛠️ AUXILIARES Y PARSEADORES
     private fun extraerJsonDeXml(xml: String): String {
@@ -308,10 +281,7 @@ class NetworkSNRepository(
                 isLenient = true
             }
 
-            println("ℹ️ [ParsearNotas] Intentando decodificar un JSON de longitud: ${jsonLimpio.length}")
-
             val listaRaw = jsonConfig.decodeFromString<List<UnidadesRaw>>(jsonLimpio)
-            println("✅ [ParsearNotas] Deserialización exitosa. Elementos encontrados: ${listaRaw.size}")
 
             val resultadoMapeado = listaRaw.map { raw ->
                 val notes = listOf(raw.C1, raw.C2, raw.C3, raw.C4, raw.C5, raw.C6, raw.C7)
@@ -330,12 +300,8 @@ class NetworkSNRepository(
                     fechaSincronizacion = ""
                 )
             }
-
-            println("🚀 [ParsearNotas] Mapeo completado con éxito. Retornando ${resultadoMapeado.size} registros.")
             resultadoMapeado
-
         } catch (e: Exception) {
-            println("❌ [ParsearNotas] ERROR CRÍTICO: ${e.message}")
             e.printStackTrace()
             emptyList()
         }
@@ -368,6 +334,6 @@ class NetworkSNRepository(
 
     private fun getPerfilXml(matricula: String): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
     private fun getCargaXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCargaAcademicaByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
-    private fun getNotasUnidadesXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCalifUnidadesByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
-    private fun getCalifFinalXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getAllCalifFinalByAlumnos xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+    private fun getNotasUnidadesXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCalificacionesUnidadesByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
+    private fun getCalifFinalXml(): String = """<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getCalificacionesFinalesByAlumno xmlns="http://tempuri.org/" /></soap:Body></soap:Envelope>"""
 }

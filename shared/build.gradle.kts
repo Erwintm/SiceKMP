@@ -12,7 +12,6 @@ plugins {
 
 kotlin {
     // 2. Usamos el target clásico de Android para KMP
-    // Reemplázalo por esto:
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -53,9 +52,7 @@ kotlin {
             implementation("io.ktor:ktor-serialization-kotlinx-json:${libs.versions.ktor.get()}")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-            // Room Multiplatform
-            implementation("androidx.room:room-runtime:${libs.versions.room.get()}")
-            implementation("androidx.sqlite:sqlite:2.5.0-alpha01")
+            // 🎯 Room y SQLite eliminados de aquí para dar soporte Web completo
         }
 
         jvmMain.dependencies {
@@ -88,6 +85,6 @@ android {
     }
 }
 
+// 🎯 Se removió el bloque kspCommonMainMetadata de Room que causaba conflictos
 dependencies {
-    add("kspCommonMainMetadata", "androidx.room:room-compiler:${libs.versions.room.get()}")
 }
