@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marsphotos.ui.AppViewModelProvider
 import com.example.marsphotos.ui.screens.CargaAcademicaScreen
+import com.example.marsphotos.ui.screens.KardexScreen
 import com.example.marsphotos.ui.screens.LoginPantalla
 import com.example.marsphotos.ui.screens.MenuScreen
 import com.example.marsphotos.ui.screens.PerfilPantalla
@@ -76,7 +77,13 @@ fun App() {
                 )
             }
             "KARDEX" -> {
-                PantallaProvisional(titulo = "Kardex Escolar") { currentScreen = "MENU" }
+                val kardexViewModel: com.example.marsphotos.ui.screens.KardexViewModel =
+                    viewModel(factory = AppViewModelProvider.Factory)
+
+                KardexScreen(
+                    viewModel = kardexViewModel,
+                    onVolver = { currentScreen = "MENU" }
+                )
             }
             "NOTAS" -> {
                 PantallaProvisional(titulo = "Calificaciones por Unidad") { currentScreen = "MENU" }

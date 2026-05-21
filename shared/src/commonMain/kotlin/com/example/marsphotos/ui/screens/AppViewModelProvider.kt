@@ -8,6 +8,7 @@ import com.example.marsphotos.ui.screens.LoginViewModel
 import com.example.marsphotos.ui.screens.PerfilViewModel // 👈 Asegúrate de importar el del perfil
 import com.example.marsphotos.ui.screens.CalifFinalViewModel
 import com.example.marsphotos.ui.screens.CargaViewModel
+import com.example.marsphotos.ui.screens.KardexViewModel
 
 object AppViewModelProvider {
 
@@ -34,6 +35,10 @@ object AppViewModelProvider {
         initializer {
             // Cambiamos 'snRepository =' por 'repository ='
             CargaViewModel(repository = container.snRepository as NetworkSNRepository)
+        }
+
+        initializer {
+            KardexViewModel(repository = container.snRepository as NetworkSNRepository)
         }
     }
 }

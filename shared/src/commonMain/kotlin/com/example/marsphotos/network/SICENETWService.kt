@@ -50,7 +50,8 @@ class SICENETWService(private val client: HttpClient) {
      */
     suspend fun getKardex(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            header("SOAPAction", "http://tempuri.org/getAllKardexConPromedioByAlumno")
+            // 🔑 CORREGIDO: Añadidas las comillas explícitas requeridas por .NET
+            header("SOAPAction", "\"http://tempuri.org/getAllKardexConPromedioByAlumno\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }

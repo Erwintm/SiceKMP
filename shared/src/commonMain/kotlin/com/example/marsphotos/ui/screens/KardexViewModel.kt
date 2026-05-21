@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.marsphotos.data.SNRepository
+import com.example.marsphotos.data.NetworkSNRepository
 import com.example.marsphotos.model.Kardex
 import kotlinx.coroutines.launch
 
@@ -16,27 +16,21 @@ data class KardexUiState(
 )
 
 class KardexViewModel(
-    private val repository: SNRepository
+    private val repository: NetworkSNRepository
 ) : ViewModel() {
 
     var uiState by mutableStateOf(KardexUiState())
         private set
 
-    init {
-        viewModelScope.launch {
-            repository.obtenerKardexLocal().collect { lista ->
-                uiState = uiState.copy(materias = lista)
-            }
-        }
-    }
-
+    // 🔄 Regresamos la función a su estado original sin parámetros
     fun cargarKardex() {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true)
+            uiState = uiState.copy(isLoading = true, error = null)
             try {
+                // 📡 Llamada limpia al repositorio KMP sin matrícula
                 val remotas = repository.fetchKardexRemote()
                 if (remotas.isNotEmpty()) {
-                    repository.insertarKardexLocal(remotas)
+                    uiState = uiState.copy(materias = remotas, error = null)
                 }
             } catch (e: Exception) {
                 uiState = uiState.copy(error = e.message)

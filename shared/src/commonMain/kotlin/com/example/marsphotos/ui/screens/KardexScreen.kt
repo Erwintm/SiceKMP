@@ -1,5 +1,6 @@
 package com.example.marsphotos.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.marsphotos.model.Kardex
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KardexScreen(
-    viewModel: KardexViewModel
+    viewModel: KardexViewModel,
+    onVolver: () -> Unit // 👈 Agregamos el callback para regresar al menú
 ) {
     val state = viewModel.uiState
     val isSyncing = state.isLoading
@@ -25,21 +28,37 @@ fun KardexScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Kardex Académico") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Kardex Académico", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 12.dp, end = 4.dp)
+                            .clickable { onVolver() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("◁", color = MaterialTheme.colorScheme.primary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)
         ) {
             state.materias.firstOrNull()?.let {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                ) {
-                    Text(
-                        text = "Última sincronización: ${it.fechaSincronizacion}",
-                        modifier = Modifier.padding(8.dp),
-                        style = MaterialTheme.typography.labelMedium
-                    )
+                if (it.fechaSincronizacion.isNotBlank()) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    ) {
+                        Text(
+                            text = "Última sincronización: ${it.fechaSincronizacion}",
+                            modifier = Modifier.padding(8.dp),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
             }
 
@@ -48,9 +67,15 @@ fun KardexScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.materias) { item ->
-                        KardexItem(item)
+                if (!isSyncing && state.materias.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No se encontraron registros en el Kardex.", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.materias) { item ->
+                            KardexItem(item)
+                        }
                     }
                 }
             }
@@ -70,13 +95,14 @@ fun KardexItem(kardex: Kardex) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = kardex.materia, fontWeight = FontWeight.Bold)
+                Text(text = kardex.materia, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Text(text = "${kardex.periodo} | ${kardex.acreditacion}", style = MaterialTheme.typography.bodySmall)
             }
             Text(
                 text = kardex.calificacion.toString(),
                 color = if (kardex.calificacion >= 70) Color(0xFF1976D2) else Color.Red,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
+                fontSize = 16.sp
             )
         }
     }
