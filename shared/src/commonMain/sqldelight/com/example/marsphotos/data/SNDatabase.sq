@@ -1,0 +1,126 @@
+-- ========================================================
+-- 1. ESTRUCTURA DE TABLAS (Idéntica a tus modelos locales)
+-- ========================================================
+
+CREATE TABLE carga_academica (
+    id INTEGER NOT NULL PRIMARY KEY, -- Mapeado como Long en SQLDelight
+    semipresencial TEXT NOT NULL,
+    observaciones TEXT NOT NULL,
+    docente TEXT NOT NULL,
+    clvOficial TEXT NOT NULL,
+    sabado TEXT NOT NULL,
+    viernes TEXT NOT NULL,
+    jueves TEXT NOT NULL,
+    miercoles TEXT NOT NULL,
+    martes TEXT NOT NULL,
+    lunes TEXT NOT NULL,
+    estadoMateria TEXT NOT NULL,
+    creditosMateria INTEGER NOT NULL,
+    materia TEXT NOT NULL,
+    grupo TEXT NOT NULL,
+    fechaSincronizacion TEXT NOT NULL
+);
+
+CREATE TABLE kardex (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    clvMateria TEXT NOT NULL,
+    materia TEXT NOT NULL,
+    calificacion INTEGER NOT NULL,
+    acreditacion TEXT NOT NULL,
+    periodo TEXT NOT NULL,
+    fechaSincronizacion TEXT NOT NULL
+);
+
+CREATE TABLE notas_unidades (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    materia TEXT NOT NULL,
+    unidades TEXT NOT NULL, -- Aquí guardas la cadena "70,85,-,-"
+    fechaSincronizacion TEXT NOT NULL
+);
+
+CREATE TABLE calif_finales (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    materia TEXT NOT NULL,
+    grupo TEXT NOT NULL,
+    calificacion INTEGER NOT NULL,
+    acreditacion TEXT NOT NULL,
+    fechaSincronizacion TEXT NOT NULL
+);
+
+CREATE TABLE perfil_estudiante (
+    matricula TEXT NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    carrera TEXT NOT NULL,
+    promedio TEXT NOT NULL,
+    semestre TEXT NOT NULL,
+    creditos TEXT NOT NULL,
+    fechaReins TEXT NOT NULL,
+    fechaSincronizacion TEXT NOT NULL
+);
+
+-- ========================================================
+-- 2. OPERACIONES DE CARGA ACADÉMICA
+-- ========================================================
+
+insertarCarga:
+INSERT OR REPLACE INTO carga_academica (id, semipresencial, observaciones, docente, clvOficial, sabado, viernes, jueves, miercoles, martes, lunes, estadoMateria, creditosMateria, materia, grupo, fechaSincronizacion)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+obtenerCarga:
+SELECT * FROM carga_academica;
+
+borrarCarga:
+DELETE FROM carga_academica;
+
+-- ========================================================
+-- 3. OPERACIONES DE KARDEX
+-- ========================================================
+
+insertarKardex:
+INSERT OR REPLACE INTO kardex (clvMateria, materia, calificacion, acreditacion, periodo, fechaSincronizacion)
+VALUES (?, ?, ?, ?, ?, ?);
+
+obtenerKardex:
+SELECT * FROM kardex;
+
+borrarKardex:
+DELETE FROM kardex;
+
+-- ========================================================
+-- 4. OPERACIONES DE NOTAS POR UNIDAD
+-- ========================================================
+
+insertarNotas:
+INSERT OR REPLACE INTO notas_unidades (materia, unidades, fechaSincronizacion)
+VALUES (?, ?, ?);
+
+obtenerNotas:
+SELECT * FROM notas_unidades;
+
+borrarNotas:
+DELETE FROM notas_unidades;
+
+-- ========================================================
+-- 5. OPERACIONES DE CALIFICACIONES FINALES
+-- ========================================================
+
+insertarFinales:
+INSERT OR REPLACE INTO calif_finales (materia, grupo, calificacion, acreditacion, fechaSincronizacion)
+VALUES (?, ?, ?, ?, ?);
+
+obtenerFinales:
+SELECT * FROM calif_finales;
+
+borrarFinales:
+DELETE FROM calif_finales;
+
+-- ========================================================
+-- 6. OPERACIONES DE PERFIL
+-- ========================================================
+
+insertarPerfil:
+INSERT OR REPLACE INTO perfil_estudiante (matricula, nombre, carrera, promedio, semestre, creditos, fechaReins, fechaSincronizacion)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+obtenerPerfil:
+SELECT * FROM perfil_estudiante WHERE matricula = ?;

@@ -12,7 +12,7 @@ data class CalifFinal(
     var fechaSincronizacion: String = ""
 )
 
-// ❌ Quitamos FinalResponse porque el JSON real empieza con [ y no con {
+
 
 @Serializable
 data class FinalRaw(

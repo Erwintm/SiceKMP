@@ -3,14 +3,20 @@ package com.example.marsphotos.data
 import com.example.marsphotos.model.*
 import com.example.marsphotos.network.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import io.ktor.client.statement.*
 import kotlinx.serialization.json.Json
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
 
 interface SNRepository {
     // Auth & Perfil
     suspend fun acceso(m: String, p: String): String
     suspend fun profile(m: String): ProfileStudent
+    fun obtenerPerfilLocal(m: String): Flow<ProfileStudent?>
+    suspend fun insertarPerfilLocal(p: ProfileStudent)
 
     // Carga Académica
     suspend fun traerCargaAcademica(): List<CargaAcademica>
@@ -18,9 +24,9 @@ interface SNRepository {
     suspend fun insertLocalCarga(materias: List<CargaAcademica>)
 
     // Kardex
-    suspend fun fetchKardexRemote(): List<Kardex>
-    fun obtenerKardexLocal(): Flow<List<Kardex>>
-    suspend fun insertarKardexLocal(lista: List<Kardex>)
+    suspend fun fetchKardexRemote(): List<com.example.marsphotos.model.Kardex>
+    fun obtenerKardexLocal(): Flow<List<com.example.marsphotos.model.Kardex>>
+    suspend fun insertarKardexLocal(lista: List<com.example.marsphotos.model.Kardex>)
 
     // Notas por Unidad
     suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades>
@@ -34,10 +40,15 @@ interface SNRepository {
 }
 
 class NetworkSNRepository(
-    private val snApiService: SICENETWService
+    private val snApiService: SICENETWService,
+    private val database: SNDatabase
 ) : SNRepository {
 
+    private val queries = database.sNDatabaseQueries
+
+    // ==========================================
     // 🔐 AUTENTICACIÓN
+    // ==========================================
     override suspend fun acceso(m: String, p: String): String {
         return try {
             val xmlEnvelope = getLoginXml(m, p)
@@ -57,7 +68,9 @@ class NetworkSNRepository(
         }
     }
 
+    // ==========================================
     // 👤 PERFIL
+    // ==========================================
     override suspend fun profile(m: String): ProfileStudent {
         return try {
             val xmlEnvelope = getPerfilXml(m)
@@ -79,25 +92,62 @@ class NetworkSNRepository(
                 val creditos = Regex(""""cdtosAcumulados":\s*"?(\d+)"?""").find(jsonLimpio)?.groupValues?.get(1) ?: "0"
                 val fechaReins = Regex(""""fechaReins":"([^"]+)"""").find(jsonLimpio)?.groupValues?.get(1) ?: "No disponible"
 
-                ProfileStudent(
+                val estudiante = ProfileStudent(
                     matricula = m,
                     nombre = nombre,
                     carrera = carrera,
                     promedio = especialidad,
                     semestre = semestre,
                     creditos = creditos,
-                    fechaReins = fechaReins
+                    fechaReins = fechaReins,
+                    fechaSincronizacion = "2026-05"
                 )
+
+                insertarPerfilLocal(estudiante)
+                estudiante
             } else {
-                ProfileStudent(m, "Error", "Formato XML inválido", "", "", "", "")
+                ProfileStudent(m, "Error", "Formato XML inválido", "", "", "", "", "")
             }
         } catch (e: Exception) {
             println("SICE_PROFILE_ERROR: ${e.message}")
-            ProfileStudent(m, "Error de red", "${e.message}", "", "", "", "")
+            ProfileStudent(m, "Error de red", "${e.message}", "", "", "", "", "")
         }
     }
 
+    override fun obtenerPerfilLocal(m: String): Flow<ProfileStudent?> {
+        return queries.obtenerPerfil(m)
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.Default)
+            .map { db ->
+                if (db == null) null else ProfileStudent(
+                    matricula = db.matricula,
+                    nombre = db.nombre,
+                    carrera = db.carrera,
+                    promedio = db.promedio,
+                    semestre = db.semestre,
+                    creditos = db.creditos,
+                    fechaReins = db.fechaReins,
+                    fechaSincronizacion = db.fechaSincronizacion
+                )
+            }
+    }
+
+    override suspend fun insertarPerfilLocal(p: ProfileStudent) {
+        queries.insertarPerfil(
+            p.matricula,
+            p.nombre,
+            p.carrera,
+            p.promedio,
+            p.semestre,
+            p.creditos,
+            p.fechaReins,
+            p.fechaSincronizacion.ifBlank { "2026-05" }
+        )
+    }
+
+    // ==========================================
     // 📅 CARGA ACADÉMICA
+    // ==========================================
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
         return try {
             val xmlEnvelope = getCargaXml()
@@ -124,13 +174,63 @@ class NetworkSNRepository(
     }
 
     override fun obtenerCarga(): Flow<List<CargaAcademica>> {
-        return flowOf(emptyList())
+        return queries.obtenerCarga()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { listaDb ->
+                listaDb.map { db ->
+                    CargaAcademica(
+                        id = db.id,
+                        Semipresencial = db.semipresencial,
+                        Observaciones = db.observaciones,
+                        Docente = db.docente,
+                        clvOficial = db.clvOficial,
+                        Sabado = db.sabado,
+                        Viernes = db.viernes,
+                        Jueves = db.jueves,
+                        Miercoles = db.miercoles,
+                        Martes = db.martes,
+                        Lunes = db.lunes,
+                        EstadoMateria = db.estadoMateria,
+                        CreditosMateria = db.creditosMateria.toInt(),
+                        Materia = db.materia,
+                        Grupo = db.grupo,
+                        fechaSincronizacion = db.fechaSincronizacion
+                    )
+                }
+            }
     }
 
-    override suspend fun insertLocalCarga(materias: List<CargaAcademica>) {}
+    override suspend fun insertLocalCarga(materias: List<CargaAcademica>) {
+        queries.transaction {
+            queries.borrarCarga()
+            materias.forEach { m ->
+                queries.insertarCarga(
+                    m.id,
+                    m.Semipresencial,
+                    m.Observaciones,
+                    m.Docente,
+                    m.clvOficial,
+                    m.Sabado,
+                    m.Viernes,
+                    m.Jueves,
+                    m.Miercoles,
+                    m.Martes,
+                    m.Lunes,
+                    m.EstadoMateria,
+                    m.CreditosMateria.toLong(),
+                    m.Materia,
+                    m.Grupo,
+                    m.fechaSincronizacion.ifBlank { "2026-05" }
+                )
+            }
+        }
+    }
 
+    // ==========================================
     // 📜 KARDEX
-    override suspend fun fetchKardexRemote(): List<Kardex> {
+    // ==========================================
+    override suspend fun fetchKardexRemote(): List<com.example.marsphotos.model.Kardex> {
         return try {
             val xmlEnvelope = getKardexXml()
             val response = snApiService.getKardex(xmlEnvelope)
@@ -153,13 +253,45 @@ class NetworkSNRepository(
         }
     }
 
-    override fun obtenerKardexLocal(): Flow<List<Kardex>> {
-        return flowOf(emptyList())
+    override fun obtenerKardexLocal(): Flow<List<com.example.marsphotos.model.Kardex>> {
+        return queries.obtenerKardex()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { listaDb ->
+                listaDb.map { db ->
+                    com.example.marsphotos.model.Kardex(
+                        id = db.id.toInt(),
+                        clvMateria = db.clvMateria,
+                        materia = db.materia,
+                        calificacion = db.calificacion.toInt(),
+                        acreditacion = db.acreditacion,
+                        periodo = db.periodo,
+                        fechaSincronizacion = db.fechaSincronizacion
+                    )
+                }
+            }
     }
 
-    override suspend fun insertarKardexLocal(lista: List<Kardex>) {}
+    // 🚨 CORRECCIÓN: Se restauró el 'override' con el tipo de paquete correcto
+    override suspend fun insertarKardexLocal(lista: List<com.example.marsphotos.model.Kardex>) {
+        queries.transaction {
+            queries.borrarKardex()
+            lista.forEach { k ->
+                queries.insertarKardex(
+                    k.clvMateria,
+                    k.materia,
+                    k.calificacion.toLong(),
+                    k.acreditacion,
+                    k.periodo,
+                    k.fechaSincronizacion.ifBlank { "2026-05" }
+                )
+            }
+        }
+    }
 
+    // ==========================================
     // 📝 NOTAS POR UNIDAD
+    // ==========================================
     override suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades> {
         return try {
             println("📡 [Notas] Enviando petición al SICE...")
@@ -170,7 +302,11 @@ class NetworkSNRepository(
             val contenidoJson = extraerJsonDeXml(xmlCompleto)
 
             if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
-                parsearNotas(contenidoJson)
+                val listaNotas = parsearNotas(contenidoJson)
+                if (listaNotas.isNotEmpty()) {
+                    insertarNotasLocal(listaNotas)
+                }
+                listaNotas
             } else {
                 emptyList()
             }
@@ -182,12 +318,37 @@ class NetworkSNRepository(
     }
 
     override fun obtenerNotasLocal(): Flow<List<MateriaUnidades>> {
-        return flowOf(emptyList())
+        return queries.obtenerNotas()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { listaDb ->
+                listaDb.map { db ->
+                    MateriaUnidades(
+                        id = db.id.toInt(),
+                        materia = db.materia,
+                        unidades = db.unidades,
+                        fechaSincronizacion = db.fechaSincronizacion
+                    )
+                }
+            }
     }
 
-    override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {}
+    override suspend fun insertarNotasLocal(lista: List<MateriaUnidades>) {
+        queries.transaction {
+            queries.borrarNotas()
+            lista.forEach { n ->
+                queries.insertarNotas(
+                    n.materia,
+                    n.unidades,
+                    n.fechaSincronizacion.ifBlank { "2026-05" }
+                )
+            }
+        }
+    }
 
+    // ==========================================
     // 🏁 CALIFICACIONES FINALES
+    // ==========================================
     override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> {
         return try {
             val xmlEnvelope = getCalifFinalXml()
@@ -203,10 +364,12 @@ class NetworkSNRepository(
                 val listaRaw = jsonConfig.decodeFromString<List<FinalRaw>>(jsonLimpio)
                 val listaRemota = listaRaw.map { raw ->
                     CalifFinal(
+                        id = 0,
                         materia = raw.materia ?: "",
                         grupo = raw.grupo ?: "",
                         calificacion = raw.calif ?: 0,
-                        accreditation = raw.acred ?: ""
+                        accreditation = raw.acred ?: "",
+                        fechaSincronizacion = "2026-05"
                     )
                 }
 
@@ -224,14 +387,42 @@ class NetworkSNRepository(
         }
     }
 
-    // 🎯 Flujo local vacío en memoria para evitar colgar de un Dao inexistente
     override fun obtenerFinalesLocal(): Flow<List<CalifFinal>> {
-        return flowOf(emptyList())
+        return queries.obtenerFinales()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { listaDb ->
+                listaDb.map { db ->
+                    CalifFinal(
+                        id = db.id.toInt(),
+                        materia = db.materia,
+                        grupo = db.grupo,
+                        calificacion = db.calificacion.toInt(),
+                        accreditation = db.acreditacion,
+                        fechaSincronizacion = db.fechaSincronizacion
+                    )
+                }
+            }
     }
 
-    override suspend fun insertarFinalesLocal(lista: List<CalifFinal>) {}
+    override suspend fun insertarFinalesLocal(lista: List<CalifFinal>) {
+        queries.transaction {
+            queries.borrarFinales()
+            lista.forEach { f ->
+                queries.insertarFinales(
+                    f.materia,
+                    f.grupo,
+                    f.calificacion.toLong(),
+                    f.accreditation,
+                    f.fechaSincronizacion.ifBlank { "2026-05" }
+                )
+            }
+        }
+    }
 
+    // ==========================================
     // 🛠️ AUXILIARES Y PARSEADORES
+    // ==========================================
     private fun extraerJsonDeXml(xml: String): String {
         return try {
             val inicioArreglo = xml.indexOf("[")
@@ -250,7 +441,7 @@ class NetworkSNRepository(
         }
     }
 
-    private fun parsearKardex(jsonString: String): List<Kardex> {
+    private fun parsearKardex(jsonString: String): List<com.example.marsphotos.model.Kardex> {
         return try {
             val jsonLimpio = jsonString.replace("\\", "")
             val jsonConfig = Json { ignoreUnknownKeys = true }
@@ -259,12 +450,13 @@ class NetworkSNRepository(
 
             respuestaRaw.lstKardex.map { raw ->
                 Kardex(
+                    id = 0,
                     clvMateria = raw.ClvMat ?: "",
                     materia = raw.Materia ?: "",
                     calificacion = raw.Calif ?: 0,
                     acreditacion = raw.Acred ?: "",
                     periodo = "${raw.P1 ?: ""} ${raw.A1 ?: ""}".trim(),
-                    fechaSincronizacion = ""
+                    fechaSincronizacion = "2026-05"
                 )
             }
         } catch (e: Exception) {
@@ -295,9 +487,10 @@ class NetworkSNRepository(
                     .joinToString(",")
 
                 MateriaUnidades(
+                    id = 0,
                     materia = raw.Materia ?: "Materia sin nombre",
                     unidades = notes,
-                    fechaSincronizacion = ""
+                    fechaSincronizacion = "2026-05"
                 )
             }
             resultadoMapeado
@@ -307,7 +500,9 @@ class NetworkSNRepository(
         }
     }
 
+    // ==========================================
     // 🛠️ GENERADORES XML (SOAP)
+    // ==========================================
     private fun getLoginXml(usuario: String, contrasenia: String): String = """
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">

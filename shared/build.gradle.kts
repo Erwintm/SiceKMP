@@ -1,41 +1,36 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    // 1. Regresamos al plugin estable de Android Library
     id("com.android.library")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
+    alias(libs.plugins.sqldelight)
+}
+
+sqldelight {
+    databases {
+        create("SNDatabase") {
+            packageName.set("com.example.marsphotos.data")
+        }
+    }
 }
 
 kotlin {
-    // 2. Usamos el target clásico de Android para KMP
+    // 1. Target de Android para KMP
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
+    // 2. Target de Desktop (JVM)
     jvm()
 
-    js {
-        browser()
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.compose.uiTooling)
-            implementation("io.ktor:ktor-client-android:${libs.versions.ktor.get()}")
-        }
-
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -52,16 +47,24 @@ kotlin {
             implementation("io.ktor:ktor-serialization-kotlinx-json:${libs.versions.ktor.get()}")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-            // 🎯 Room y SQLite eliminados de aquí para dar soporte Web completo
+            // Runtime base de SQLDelight
+            implementation(libs.sqldelight.runtime)
+            implementation("app.cash.sqldelight:coroutines-extensions:2.1.0")
+        }
+
+        androidMain.dependencies {
+            // Driver nativo de Android
+            implementation(libs.sqldelight.android.driver)
+
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.compose.uiTooling)
+            implementation("io.ktor:ktor-client-android:${libs.versions.ktor.get()}")
         }
 
         jvmMain.dependencies {
+            // Driver nativo de Desktop (JVM)
+            implementation(libs.sqldelight.jvm.driver)
             implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}")
-        }
-
-        jsMain.dependencies {
-            implementation(libs.wrappers.browser)
-            implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
         }
 
         commonTest.dependencies {
@@ -85,6 +88,5 @@ android {
     }
 }
 
-// 🎯 Se removió el bloque kspCommonMainMetadata de Room que causaba conflictos
 dependencies {
 }
