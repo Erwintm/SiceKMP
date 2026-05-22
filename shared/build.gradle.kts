@@ -61,9 +61,12 @@ kotlin {
             implementation("io.ktor:ktor-client-android:${libs.versions.ktor.get()}")
         }
 
-        jvmMain.dependencies {
-            implementation("app.cash.sqldelight:sqlite-driver:2.1.0")
-            implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}")
+        val jvmMain by getting {
+            dependencies {
+
+                implementation("app.cash.sqldelight:sqlite-driver:2.1.0")
+                implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}")
+            }
         }
 
         commonTest.dependencies {

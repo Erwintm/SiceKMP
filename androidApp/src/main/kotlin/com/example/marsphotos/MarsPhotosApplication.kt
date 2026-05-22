@@ -8,14 +8,12 @@ import com.example.marsphotos.ui.AppViewModelProvider
 
 class MarsPhotosApplication : Application() {
 
-    // Retorna el contenedor global de dependencias
+
     val container: AppContainer
         get() = AppViewModelProvider.container
 
     override fun onCreate() {
         super.onCreate()
-
-        // Inicializamos el driver de SQLite y el contenedor común al arrancar la app
         val driverFactory = DatabaseDriverFactory(applicationContext)
         val androidDriver = driverFactory.createDriver()
 

@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         AppViewModelProvider.container = container
 
         setContent {
-            App() // Tu pantalla raíz compartida de KMP
+            App()
         }
     }
 }

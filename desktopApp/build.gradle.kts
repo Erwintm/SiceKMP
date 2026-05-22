@@ -8,7 +8,7 @@ plugins {
 
 dependencies {
     implementation(projects.shared)
-
+    implementation("app.cash.sqldelight:sqlite-driver:2.1.0")
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
 

@@ -46,9 +46,9 @@ class NetworkSNRepository(
 
     private val queries = database.sNDatabaseQueries
 
-    // ==========================================
-    // 🔐 AUTENTICACIÓN
-    // ==========================================
+
+    // AUTENTICACIÓN
+
     override suspend fun acceso(m: String, p: String): String {
         return try {
             val xmlEnvelope = getLoginXml(m, p)
@@ -68,9 +68,11 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
+
+
+
     // 👤 PERFIL
-    // ==========================================
+
     override suspend fun profile(m: String): ProfileStudent {
         return try {
             val xmlEnvelope = getPerfilXml(m)
@@ -145,9 +147,9 @@ class NetworkSNRepository(
         )
     }
 
-    // ==========================================
+
     // 📅 CARGA ACADÉMICA
-    // ==========================================
+
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
         return try {
             val xmlEnvelope = getCargaXml()
@@ -227,9 +229,9 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
+
     // 📜 KARDEX
-    // ==========================================
+
     override suspend fun fetchKardexRemote(): List<com.example.marsphotos.model.Kardex> {
         return try {
             val xmlEnvelope = getKardexXml()
@@ -272,7 +274,7 @@ class NetworkSNRepository(
             }
     }
 
-    // 🚨 CORRECCIÓN: Se restauró el 'override' con el tipo de paquete correcto
+
     override suspend fun insertarKardexLocal(lista: List<com.example.marsphotos.model.Kardex>) {
         queries.transaction {
             queries.borrarKardex()
@@ -289,12 +291,12 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
-    // 📝 NOTAS POR UNIDAD
-    // ==========================================
+
+    // NOTAS POR UNIDAD
+
     override suspend fun fetchNotasUnidadesRemote(): List<MateriaUnidades> {
         return try {
-            println("📡 [Notas] Enviando petición al SICE...")
+            println(" Enviando petición al SICE...")
             val xmlEnvelope = getNotasUnidadesXml()
             val response = snApiService.getNotasUnidades(xmlEnvelope)
             val xmlCompleto = response.bodyAsText()
@@ -311,7 +313,7 @@ class NetworkSNRepository(
                 emptyList()
             }
         } catch (e: Exception) {
-            println("❌ Error crítico en Notas Unidades: ${e.message}")
+            println("Error crítico en Notas Unidades: ${e.message}")
             e.printStackTrace()
             emptyList()
         }
@@ -346,43 +348,37 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
-    // 🏁 CALIFICACIONES FINALES
-    // ==========================================
+
+    // CALIFICACIONES FINALES
+
     override suspend fun fetchCalifFinalesRemote(): List<CalifFinal> {
-        return try {
-            val xmlEnvelope = getCalifFinalXml()
-            val response = snApiService.getCalifFinales(xmlEnvelope)
-            val xmlCompleto = response.bodyAsText()
+        val xmlEnvelope = getCalifFinalXml()
+        val response = snApiService.getCalifFinales(xmlEnvelope)
+        val xmlCompleto = response.bodyAsText()
 
-            val contenidoJson = extraerJsonDeXml(xmlCompleto)
+        val contenidoJson = extraerJsonDeXml(xmlCompleto)
 
-            if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
-                val jsonLimpio = contenidoJson.replace("\\", "").trim()
-                val jsonConfig = Json { ignoreUnknownKeys = true }
+        return if (contenidoJson.isNotEmpty() && contenidoJson != "null") {
+            val jsonLimpio = contenidoJson.replace("\\", "").trim()
+            val jsonConfig = Json { ignoreUnknownKeys = true }
 
-                val listaRaw = jsonConfig.decodeFromString<List<FinalRaw>>(jsonLimpio)
-                val listaRemota = listaRaw.map { raw ->
-                    CalifFinal(
-                        id = 0,
-                        materia = raw.materia ?: "",
-                        grupo = raw.grupo ?: "",
-                        calificacion = raw.calif ?: 0,
-                        accreditation = raw.acred ?: "",
-                        fechaSincronizacion = "2026-05"
-                    )
-                }
-
-                if (listaRemota.isNotEmpty()) {
-                    insertarFinalesLocal(listaRemota)
-                }
-                listaRemota
-            } else {
-                emptyList()
+            val listaRaw = jsonConfig.decodeFromString<List<FinalRaw>>(jsonLimpio)
+            val listaRemota = listaRaw.map { raw ->
+                CalifFinal(
+                    id = 0,
+                    materia = raw.materia ?: "",
+                    grupo = raw.grupo ?: "",
+                    calificacion = raw.calif ?: 0,
+                    accreditation = raw.acred ?: "",
+                    fechaSincronizacion = "2026-05"
+                )
             }
-        } catch (e: Exception) {
-            println("❌ Error en Calif Finales KMP: ${e.message}")
-            e.printStackTrace()
+
+            if (listaRemota.isNotEmpty()) {
+                insertarFinalesLocal(listaRemota)
+            }
+            listaRemota
+        } else {
             emptyList()
         }
     }
@@ -420,9 +416,9 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
-    // 🛠️ AUXILIARES Y PARSEADORES
-    // ==========================================
+
+    // UXILIARES Y PARSEADORES
+
     private fun extraerJsonDeXml(xml: String): String {
         return try {
             val inicioArreglo = xml.indexOf("[")
@@ -500,9 +496,9 @@ class NetworkSNRepository(
         }
     }
 
-    // ==========================================
-    // 🛠️ GENERADORES XML (SOAP)
-    // ==========================================
+
+    // GENERADORES XML (SOAP)
+
     private fun getLoginXml(usuario: String, contrasenia: String): String = """
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">

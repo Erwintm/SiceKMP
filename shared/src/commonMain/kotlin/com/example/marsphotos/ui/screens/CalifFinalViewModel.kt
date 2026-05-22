@@ -14,62 +14,53 @@ data class FinalesUiState(
     val listaFinal: List<CalifFinal> = emptyList(),
     val error: String? = null
 )
+    class CalifFinalViewModel(
+        private val repository: SNRepository
+    ) : ViewModel() {
 
-class CalifFinalViewModel(
-    private val repository: SNRepository
-) : ViewModel() {
+        var uiState by mutableStateOf(FinalesUiState())
+            private set
 
-    // 🚦 Estado reactivo que consumirá tu pantalla de Compose
-    var uiState by mutableStateOf(FinalesUiState())
-        private set
+        init {
 
-    init {
-        // 1. Al despertar el ViewModel, nos amarramos DE INMEDIATO a la base de datos local
-        observarDatosLocales()
-
-        // 2. Intentamos traer datos nuevos del SICE en segundo plano
-        cargarFinales()
-    }
-
-    /**
-     * Se conecta al Flow de SQLDelight. Cualquier cambio en la base de datos
-     * se reflejará instantáneamente en la pantalla sin recargar.
-     */
-    private fun observarDatosLocales() {
-        viewModelScope.launch {
-            repository.obtenerFinalesLocal().collect { listaLocal ->
-                println("💾 [Finales Locales] Datos leídos desde SQLite: ${listaLocal.size} materias.")
-                uiState = uiState.copy(
-                    listaFinal = listaLocal
-                )
-            }
+            observarDatosLocales()
+            cargarFinales()
         }
-    }
 
-    /**
-     * Intenta actualizar la base de datos local conectándose al SICE.
-     * Si no hay internet, falla silenciosamente manteniendo el estado local intacto.
-     */
-    fun cargarFinales() {
-        viewModelScope.launch {
-            // Solo mostramos loading si la lista está vacía (primer inicio)
-            if (uiState.listaFinal.isEmpty()) {
-                uiState = uiState.copy(isLoading = true)
-            }
+        private fun observarDatosLocales() {
+            viewModelScope.launch {
+                repository.obtenerFinalesLocal().collect { listaLocal ->
+                    println("Datos leídos desde SQLite: ${listaLocal.size} materias.")
 
-            try {
-                val remotas = repository.fetchCalifFinalesRemote()
-                // Si la red respondió, actualizamos todo
-                uiState = uiState.copy(listaFinal = remotas, error = null)
-            } catch (e: Exception) {
-                // 💡 Aquí está el secreto:
-                // Si hubo error pero ya teníamos datos en listaFinal, los mantenemos intactos.
-                if (uiState.listaFinal.isEmpty()) {
-                    uiState = uiState.copy(error = e.message)
+                    uiState = uiState.copy(
+                        listaFinal = listaLocal
+                    )
                 }
-            } finally {
-                uiState = uiState.copy(isLoading = false)
+            }
+        }
+
+        fun cargarFinales() {
+            viewModelScope.launch {
+                if (uiState.listaFinal.isEmpty()) {
+                    uiState = uiState.copy(isLoading = true)
+                }
+
+                try {
+
+                    repository.fetchCalifFinalesRemote()
+
+
+                    uiState = uiState.copy(error = null)
+                } catch (e: Exception) {
+                    println(" Falló la red, manteniendo datos locales: ${e.message}")
+
+
+                    if (uiState.listaFinal.isEmpty()) {
+                        uiState = uiState.copy(error = "No hay conexión a internet y no tienes datos guardados.")
+                    }
+                } finally {
+                    uiState = uiState.copy(isLoading = false)
+                }
             }
         }
     }
-}
