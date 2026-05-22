@@ -206,22 +206,22 @@ class NetworkSNRepository(
             queries.borrarCarga()
             materias.forEach { m ->
                 queries.insertarCarga(
-                    m.id,
-                    m.Semipresencial,
-                    m.Observaciones,
-                    m.Docente,
-                    m.clvOficial,
-                    m.Sabado,
-                    m.Viernes,
-                    m.Jueves,
-                    m.Miercoles,
-                    m.Martes,
-                    m.Lunes,
-                    m.EstadoMateria,
-                    m.CreditosMateria.toLong(),
-                    m.Materia,
-                    m.Grupo,
-                    m.fechaSincronizacion.ifBlank { "2026-05" }
+                    id = null,
+                    semipresencial = m.Semipresencial,
+                    observaciones = m.Observaciones,
+                    docente = m.Docente,
+                    clvOficial = m.clvOficial,
+                    sabado = m.Sabado,
+                    viernes = m.Viernes,
+                    jueves = m.Jueves,
+                    miercoles = m.Miercoles,
+                    martes = m.Martes,
+                    lunes = m.Lunes,
+                    estadoMateria = m.EstadoMateria,
+                    creditosMateria = m.CreditosMateria.toLong(),
+                    materia = m.Materia,
+                    grupo = m.Grupo,
+                    fechaSincronizacion = m.fechaSincronizacion.ifBlank { "2026-05" }
                 )
             }
         }

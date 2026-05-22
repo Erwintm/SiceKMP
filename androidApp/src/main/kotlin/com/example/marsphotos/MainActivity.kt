@@ -6,21 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.marsphotos.ui.AppViewModelProvider //
+import com.example.marsphotos.ui.AppViewModelProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // Recuperamos el contenedor ya inicializado desde la aplicación
         val application = application as MarsPhotosApplication
         val container = application.container
-
-        // ⚡ LA LÍNEA MÁGICA: Le pasamos el contenedor de Android al proveedor del módulo Shared
         AppViewModelProvider.container = container
 
         setContent {
-            App()
+            App() // Tu pantalla raíz compartida de KMP
         }
     }
 }

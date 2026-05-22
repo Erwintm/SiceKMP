@@ -21,7 +21,7 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
-
+    implementation("app.cash.sqldelight:android-driver:2.1.0")
     val room_version = "2.6.1" // Usa la última versión estable
 
     implementation("androidx.room:room-runtime:$room_version")

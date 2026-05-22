@@ -62,8 +62,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
-            // Driver nativo de Desktop (JVM)
-            implementation(libs.sqldelight.jvm.driver)
+            implementation("app.cash.sqldelight:sqlite-driver:2.1.0")
             implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}")
         }
 

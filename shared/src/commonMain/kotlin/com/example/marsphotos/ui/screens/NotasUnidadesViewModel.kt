@@ -22,20 +22,37 @@ class NotasUnidadesViewModel(
     var uiState by mutableStateOf(NotasUiState())
         private set
 
-    // Quitamos la recolección del flujo local del init para que no interfiera
-    init { }
+    init {
+        // 1. Iniciar la observación de la base de datos local desde el inicio
+        observarNotasLocales()
+
+        // 2. Intentar actualizar desde el servidor en segundo plano
+        cargarNotas()
+    }
+
+    private fun observarNotasLocales() {
+        viewModelScope.launch {
+            repository.obtenerNotasLocal().collect { notasLocales ->
+                uiState = uiState.copy(materias = notasLocales)
+            }
+        }
+    }
 
     fun cargarNotas() {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true)
-            try {
-                // 1. Traemos los datos directamente de la API remota
-                val remotas = repository.fetchNotasUnidadesRemote()
+            // Solo mostramos loading si no tenemos nada que mostrar (primer acceso)
+            if (uiState.materias.isEmpty()) {
+                uiState = uiState.copy(isLoading = true)
+            }
 
-                // 2. Los asignamos directo al estado de la UI de forma inmediata
-                uiState = uiState.copy(materias = remotas, error = null)
+            try {
+                repository.fetchNotasUnidadesRemote()
+                uiState = uiState.copy(error = null)
             } catch (e: Exception) {
-                uiState = uiState.copy(error = e.message)
+                // Si ya tenemos datos, no sobrescribimos con el error
+                if (uiState.materias.isEmpty()) {
+                    uiState = uiState.copy(error = "No se pudieron cargar las notas: ${e.message}")
+                }
             } finally {
                 uiState = uiState.copy(isLoading = false)
             }
