@@ -51,7 +51,7 @@ sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sq
 sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
 sqldelight-jvm-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 
-# Opcional: Si vas a usar Coroutines/Flows con la base de datos, agrega esto:
+
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

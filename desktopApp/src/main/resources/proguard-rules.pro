@@ -1,0 +1,8 @@
+-dontwarn **
+-dontshrink
+-dontoptimize
+-dontobfuscate
+-keepattributes *
+-keep class ** { *; }
+-keep interface ** { *; }
+-keep enum ** { *; }

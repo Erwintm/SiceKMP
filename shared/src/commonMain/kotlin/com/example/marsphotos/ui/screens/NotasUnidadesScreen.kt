@@ -20,7 +20,7 @@ import com.example.marsphotos.model.MateriaUnidades
 @Composable
 fun NotasUnidadesScreen(
     viewModel: NotasUnidadesViewModel,
-    onVolver: () -> Unit // 👈 Agregamos el callback para regresar al menú
+    onVolver: () -> Unit
 ) {
     val uiState = viewModel.uiState
     val isSyncing = uiState.isLoading
@@ -33,7 +33,7 @@ fun NotasUnidadesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Calificaciones por Unidad", fontWeight = FontWeight.Bold) },
-                navigationIcon = { // 👈 Clonamos exactamente el mismo diseño de navegación del Kardex
+                navigationIcon = {
                     Box(
                         modifier = Modifier
                             .padding(start = 12.dp, end = 4.dp)
@@ -56,7 +56,7 @@ fun NotasUnidadesScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Mostrar fecha de sincronización si existen datos
+
             uiState.materias.firstOrNull()?.let {
                 if (it.fechaSincronizacion.isNotBlank()) {
                     Text(
@@ -69,12 +69,12 @@ fun NotasUnidadesScreen(
             }
 
             if (isSyncing && uiState.materias.isEmpty()) {
-                // Pantalla de carga inicial
+
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (!isSyncing && uiState.materias.isEmpty()) {
-                // Mensaje por si la API no devuelve nada
+
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "No hay calificaciones disponibles localmente.",

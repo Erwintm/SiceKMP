@@ -23,10 +23,7 @@ class NotasUnidadesViewModel(
         private set
 
     init {
-        // 1. Iniciar la observación de la base de datos local desde el inicio
         observarNotasLocales()
-
-        // 2. Intentar actualizar desde el servidor en segundo plano
         cargarNotas()
     }
 
@@ -40,7 +37,7 @@ class NotasUnidadesViewModel(
 
     fun cargarNotas() {
         viewModelScope.launch {
-            // Solo mostramos loading si no tenemos nada que mostrar (primer acceso)
+
             if (uiState.materias.isEmpty()) {
                 uiState = uiState.copy(isLoading = true)
             }
@@ -49,7 +46,7 @@ class NotasUnidadesViewModel(
                 repository.fetchNotasUnidadesRemote()
                 uiState = uiState.copy(error = null)
             } catch (e: Exception) {
-                // Si ya tenemos datos, no sobrescribimos con el error
+
                 if (uiState.materias.isEmpty()) {
                     uiState = uiState.copy(error = "No se pudieron cargar las notas: ${e.message}")
                 }

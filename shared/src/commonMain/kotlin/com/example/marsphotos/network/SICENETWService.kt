@@ -9,22 +9,15 @@ class SICENETWService(private val client: HttpClient) {
 
     // URL base del servicio web del SICE
     private val baseUrl = "https://sicenet.itsur.edu.mx/ws/wsalumnos.asmx"
-
-    /**
-     * Hace el login enviando el sobre XML correspondiente a la API SOAP.
-     */
     suspend fun acceso(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            // 🔑 ACTUALIZADO: Ahora apunta exactamente a accesoLogin con comillas explícitas
             header("SOAPAction", "\"http://tempuri.org/accesoLogin\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }
     }
 
-    /**
-     * Recupera los datos del perfil del alumno en formato XML.
-     */
+    /*Recupera los datos del perfil del alumno en formato XML.*/
     suspend fun getPerfil(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
             // 🔑 Agregamos las comillas internas obligatorias para .NET
@@ -34,9 +27,7 @@ class SICENETWService(private val client: HttpClient) {
         }
     }
 
-    /**
-     * Recupera la carga académica actual del alumno.
-     */
+    /*Recupera la carga académica actual del alumno. */
     suspend fun getCarga(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
             header("SOAPAction", "http://tempuri.org/getCargaAcademicaByAlumno")
@@ -57,24 +48,18 @@ class SICENETWService(private val client: HttpClient) {
         }
     }
 
-    /**
-     * Recupera las calificaciones parciales por unidad.
-     */
-    /**
-     * Recupera las calificaciones parciales por unidad.
-     */
+    /*Recupera las calificaciones parciales por unidad.*/
+
     suspend fun getNotasUnidades(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
-            // 🔑 CORREGIDO: Comillas dobles obligatorias para .NET
+
             header("SOAPAction", "\"http://tempuri.org/getCalifUnidadesByAlumno\"")
             contentType(ContentType.Text.Xml.withParameter("charset", "utf-8"))
             setBody(requestBody)
         }
     }
 
-    /**
-     * Recupera las calificaciones finales de las materias.
-     */
+    /*Recupera las calificaciones finales de las materias.*/
     suspend fun getCalifFinales(requestBody: String): HttpResponse {
         return client.post(baseUrl) {
             header("SOAPAction", "http://tempuri.org/getAllCalifFinalByAlumnos")

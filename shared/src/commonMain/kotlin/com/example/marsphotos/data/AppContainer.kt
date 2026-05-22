@@ -24,12 +24,12 @@ class DefaultAppContainer(
         SICENETWService(client)
     }
 
-    // Inicializamos la base de datos de SQLDelight
+    // base de datos de SQLDelight
     private val database: SNDatabase by lazy {
         SNDatabase(driver = databaseDriver)
     }
 
-    // Repositorio limpio: Inyectamos el servicio de red y la base de datos local
+    //Inyectamos el servicio de red y la base de datos local
     override val snRepository: SNRepository by lazy {
         NetworkSNRepository(
             snApiService = siceService,

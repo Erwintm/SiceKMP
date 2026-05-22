@@ -20,14 +20,14 @@ sqldelight {
 }
 
 kotlin {
-    // 1. Target de Android para KMP
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
-    // 2. Target de Desktop (JVM)
+
     jvm()
 
     sourceSets {
@@ -75,7 +75,7 @@ kotlin {
     }
 }
 
-// 3. Bloque nativo de Android va AFUERA de la etiqueta kotlin {}
+
 android {
     namespace = "com.example.marsphotos.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()

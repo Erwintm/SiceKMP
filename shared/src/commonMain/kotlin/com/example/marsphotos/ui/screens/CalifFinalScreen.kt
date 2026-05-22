@@ -33,7 +33,7 @@ fun CalifFinalScreen(
             TopAppBar(
                 title = { Text("Calificaciones Finales", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    // ◁ Botón de regreso idéntico al de Kardex y Unidades
+
                     Box(
                         modifier = Modifier
                             .padding(start = 12.dp, end = 4.dp)

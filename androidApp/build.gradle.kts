@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
-    id("org.jetbrains.kotlin.android") // <-- Esto es lo que faltaba para que reconozca el bloque kotlin {}
+    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     id("com.google.devtools.ksp")
@@ -22,7 +22,7 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
     implementation("app.cash.sqldelight:android-driver:2.1.0")
-    val room_version = "2.6.1" // Usa la última versión estable
+    val room_version = "2.6.1"
 
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")

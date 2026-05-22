@@ -20,7 +20,7 @@ import com.example.marsphotos.model.MenuOption
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuScreen(
-    onNavigate: (String) -> Unit // Sustituimos NavController por un callback multiplataforma
+    onNavigate: (String) -> Unit
 ) {
     val options = listOf(
         MenuOption("Carga\nAcadémica", "carga", Color(0xFF1976D2)),
@@ -49,7 +49,7 @@ fun MenuScreen(
         ) {
             items(options) { option ->
                 MenuCard(option) {
-                    onNavigate(option.route) // Disparamos la ruta elegida de forma limpia
+                    onNavigate(option.route)
                 }
             }
         }

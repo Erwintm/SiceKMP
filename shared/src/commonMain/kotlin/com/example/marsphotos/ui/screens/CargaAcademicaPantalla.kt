@@ -38,7 +38,7 @@ fun CargaAcademicaScreen(
             TopAppBar(
                 title = { Text("Mi Carga Académica", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    // ⬅️ Dibujamos un botón de regreso limpio con texto simulando la flecha para evitar fallas de librería
+
                     Box(
                         modifier = Modifier
                             .padding(start = 12.dp, end = 4.dp)

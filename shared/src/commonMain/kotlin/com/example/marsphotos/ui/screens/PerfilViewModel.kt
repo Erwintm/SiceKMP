@@ -20,7 +20,7 @@ class PerfilViewModel(private val snRepository: SNRepository) : ViewModel() {
             try {
                 perfilUiState = snRepository.profile(matricula)
             } catch (e: Exception) {
-                // Aquí manejas los errores de red de forma segura
+
             } finally {
                 isRefreshing = false
             }

@@ -12,8 +12,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        // Recuperamos el contenedor ya inicializado desde la aplicación
         val application = application as MarsPhotosApplication
         val container = application.container
         AppViewModelProvider.container = container

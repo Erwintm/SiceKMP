@@ -1,3 +1,4 @@
+import jdk.jfr.events.ActiveSettingEvent.enabled
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -20,9 +21,17 @@ compose.desktop {
         mainClass = "com.example.marsphotos.MainKt"
 
         nativeDistributions {
+
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.example.marsphotos"
             packageVersion = "1.0.0"
+
+            buildTypes.release.proguard {
+                isEnabled.set(false)
+            }
+
         }
     }
 }
+
+

@@ -71,7 +71,7 @@ class NetworkSNRepository(
 
 
 
-    // 👤 PERFIL
+    //PERFIL
 
     override suspend fun profile(m: String): ProfileStudent {
         return try {
@@ -148,7 +148,7 @@ class NetworkSNRepository(
     }
 
 
-    // 📅 CARGA ACADÉMICA
+    //CARGA ACADÉMICA
 
     override suspend fun traerCargaAcademica(): List<CargaAcademica> {
         return try {
@@ -230,7 +230,7 @@ class NetworkSNRepository(
     }
 
 
-    // 📜 KARDEX
+    //KARDEX
 
     override suspend fun fetchKardexRemote(): List<com.example.marsphotos.model.Kardex> {
         return try {

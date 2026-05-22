@@ -22,7 +22,7 @@ import com.example.marsphotos.ui.screens.PerfilViewModel
 @Composable
 fun App() {
     MaterialTheme {
-        // 🚦 Control de navegación nativo de KMP basado en estados
+
         var currentScreen by remember { mutableStateOf("LOGIN") }
         var matriculaUsuario by remember { mutableStateOf("") }
 
@@ -35,7 +35,7 @@ fun App() {
                     viewModel = loginViewModel,
                     onLoginSuccess = { matricula ->
                         matriculaUsuario = matricula
-                        currentScreen = "PERFIL" // ➡️ Brinca directo al Perfil al loguearse
+                        currentScreen = "PERFIL"
                     }
                 )
             }
@@ -48,13 +48,13 @@ fun App() {
                     matricula = matriculaUsuario,
                     viewModel = perfilViewModel,
                     onNavigateToMenu = {
-                        currentScreen = "MENU" // ➡️ Al dar "Ir al menú", avanza al mosaico
+                        currentScreen = "MENU"
                     }
                 )
             }
 
             "MENU" -> {
-                // 🚪 Invocamos tu menú en cuadrícula real
+
                 MenuScreen(
                     onNavigate = { rutaDestino ->
                         when (rutaDestino) {
@@ -68,7 +68,7 @@ fun App() {
                 )
             }
 
-            // 📚 Estados provisionales para el resto de tus pantallas del SICE
+
             "CARGA" -> {
                 val cargaViewModel: com.example.marsphotos.ui.screens.CargaViewModel =
                     viewModel(factory = AppViewModelProvider.Factory)
@@ -93,7 +93,7 @@ fun App() {
 
                 NotasUnidadesScreen(
                     viewModel = notasViewModel,
-                    onVolver = { currentScreen = "MENU" } // 👈 Conectamos el botón de regreso al mosaico principal
+                    onVolver = { currentScreen = "MENU" }
                 )
             }
             "FINALES" -> {
@@ -102,16 +102,14 @@ fun App() {
 
                 CalifFinalScreen(
                     viewModel = finalesViewModel,
-                    onBack = { currentScreen = "MENU" } // Regresa chido al menú principal
+                    onBack = { currentScreen = "MENU" }
                 )
             }
         }
     }
 }
 
-/**
- * Contenedor genérico temporal para simular las pantallas restantes
- */
+
 @Composable
 fun PantallaProvisional(titulo: String, onVolver: () -> Unit) {
     Column(

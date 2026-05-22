@@ -28,7 +28,7 @@ import sicekmp.shared.generated.resources.usuario
 @Composable
 fun LoginPantalla(
     onLoginSuccess: (String) -> Unit,
-    viewModel: LoginViewModel // Quitamos la inicialización por defecto con Factory vieja
+    viewModel: LoginViewModel
 ) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
