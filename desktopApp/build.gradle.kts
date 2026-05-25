@@ -1,4 +1,3 @@
-import jdk.jfr.events.ActiveSettingEvent.enabled
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -12,7 +11,6 @@ dependencies {
     implementation("app.cash.sqldelight:sqlite-driver:2.1.0")
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
-
     implementation(libs.compose.uiToolingPreview)
 }
 
@@ -21,17 +19,14 @@ compose.desktop {
         mainClass = "com.example.marsphotos.MainKt"
 
         nativeDistributions {
-
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.example.marsphotos"
             packageVersion = "1.0.0"
+        }
 
-            buildTypes.release.proguard {
-                isEnabled.set(false)
-            }
 
+        buildTypes.release.proguard {
+            isEnabled.set(false)
         }
     }
 }
-
-

@@ -1,9 +1,9 @@
--- ========================================================
--- 1. ESTRUCTURA DE TABLAS (Idéntica a tus modelos locales)
--- ========================================================
+
+--ESTRUCTURA DE TABLAS
+
 
 CREATE TABLE carga_academica (
-    id INTEGER NOT NULL PRIMARY KEY, -- Mapeado como Long en SQLDelight
+    id INTEGER NOT NULL PRIMARY KEY,
     semipresencial TEXT NOT NULL,
     observaciones TEXT NOT NULL,
     docente TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE kardex (
 CREATE TABLE notas_unidades (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     materia TEXT NOT NULL,
-    unidades TEXT NOT NULL, -- Aquí guardas la cadena "70,85,-,-"
+    unidades TEXT NOT NULL,
     fechaSincronizacion TEXT NOT NULL
 );
 
@@ -58,9 +58,9 @@ CREATE TABLE perfil_estudiante (
     fechaSincronizacion TEXT NOT NULL
 );
 
--- ========================================================
--- 2. OPERACIONES DE CARGA ACADÉMICA
--- ========================================================
+
+--OPERACIONES DE CARGA ACADÉMICA
+
 
 insertarCarga:
 INSERT OR REPLACE INTO carga_academica (id, semipresencial, observaciones, docente, clvOficial, sabado, viernes, jueves, miercoles, martes, lunes, estadoMateria, creditosMateria, materia, grupo, fechaSincronizacion)
@@ -72,9 +72,9 @@ SELECT * FROM carga_academica;
 borrarCarga:
 DELETE FROM carga_academica;
 
--- ========================================================
--- 3. OPERACIONES DE KARDEX
--- ========================================================
+
+-- OPERACIONES DE KARDEX
+
 
 insertarKardex:
 INSERT OR REPLACE INTO kardex (clvMateria, materia, calificacion, acreditacion, periodo, fechaSincronizacion)
@@ -86,9 +86,9 @@ SELECT * FROM kardex;
 borrarKardex:
 DELETE FROM kardex;
 
--- ========================================================
--- 4. OPERACIONES DE NOTAS POR UNIDAD
--- ========================================================
+
+--OPERACIONES DE NOTAS POR UNIDAD
+
 
 insertarNotas:
 INSERT OR REPLACE INTO notas_unidades (materia, unidades, fechaSincronizacion)
@@ -100,9 +100,9 @@ SELECT * FROM notas_unidades;
 borrarNotas:
 DELETE FROM notas_unidades;
 
--- ========================================================
--- 5. OPERACIONES DE CALIFICACIONES FINALES
--- ========================================================
+
+--OPERACIONES DE CALIFICACIONES FINALES
+
 
 insertarFinales:
 INSERT OR REPLACE INTO calif_finales (materia, grupo, calificacion, acreditacion, fechaSincronizacion)
@@ -114,9 +114,9 @@ SELECT * FROM calif_finales;
 borrarFinales:
 DELETE FROM calif_finales;
 
--- ========================================================
--- 6. OPERACIONES DE PERFIL
--- ========================================================
+
+--OPERACIONES DE PERFIL
+
 
 insertarPerfil:
 INSERT OR REPLACE INTO perfil_estudiante (matricula, nombre, carrera, promedio, semestre, creditos, fechaReins, fechaSincronizacion)
